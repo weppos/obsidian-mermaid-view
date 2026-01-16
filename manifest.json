@@ -1,0 +1,9 @@
+{
+	"id": "mermaid-view",
+	"name": "Mermaid View",
+	"version": "0.1.0",
+	"minAppVersion": "1.5.0",
+	"description": "Treat .mermaid and .mmd files as first-class citizens, rendering them fullscreen as Mermaid diagrams when opened.",
+	"author": "weppos",
+	"isDesktopOnly": false
+}

@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+
+# Build outputs (keep main.js for releases)
+*.map
+
+# Debug
+npm-debug.log*

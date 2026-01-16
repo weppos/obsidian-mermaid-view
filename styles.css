@@ -1,0 +1,66 @@
+/* Mermaid View Plugin Styles */
+
+.mermaid-view-container {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+/* Preview Mode - Fullscreen Diagram */
+.mermaid-view-preview {
+	height: 100%;
+	width: 100%;
+	overflow: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+.mermaid-view-preview .mermaid {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+/* Ensure the rendered SVG scales properly */
+.mermaid-view-preview svg {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Source Mode - Text Editor */
+.mermaid-view-source {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.mermaid-view-source .cm-editor {
+	height: 100%;
+	flex: 1;
+}
+
+.mermaid-view-source .cm-scroller {
+	overflow: auto;
+}
+
+/* Error display */
+.mermaid-view-error {
+	color: var(--text-error);
+	padding: 20px;
+	text-align: center;
+	font-family: var(--font-monospace);
+	white-space: pre-wrap;
+}
+
+/* Empty state */
+.mermaid-view-empty {
+	color: var(--text-muted);
+	padding: 20px;
+	text-align: center;
+	font-style: italic;
+}
