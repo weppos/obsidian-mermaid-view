@@ -9,6 +9,13 @@ export const DEFAULT_SETTINGS: MermaidViewSettings = {
 	extensions: ["mermaid", "mmd"],
 };
 
+export function parseExtensions(value: string): string[] {
+	return value
+		.split(",")
+		.map((ext) => ext.trim().toLowerCase())
+		.filter((ext) => ext.length > 0);
+}
+
 export class MermaidViewSettingTab extends PluginSettingTab {
 	plugin: MermaidViewPlugin;
 
@@ -32,11 +39,7 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 					.setPlaceholder("mermaid, mmd")
 					.setValue(this.plugin.settings.extensions.join(", "))
 					.onChange(async (value) => {
-						const extensions = value
-							.split(",")
-							.map((ext) => ext.trim().toLowerCase())
-							.filter((ext) => ext.length > 0);
-						this.plugin.settings.extensions = extensions;
+						this.plugin.settings.extensions = parseExtensions(value);
 						await this.plugin.saveSettings();
 					})
 			);
