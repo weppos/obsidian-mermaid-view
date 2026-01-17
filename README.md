@@ -19,12 +19,6 @@ Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can u
   ```
 - **Menu integration** - Right-click in the file explorer to create a new Mermaid file, or use the command palette.
 
-## Usage
-
-1. Create a new `.mermaid` (or `.mmd`) file or use the "New mermaid" context menu option
-2. Write your Mermaid diagram syntax
-3. Toggle between modes using the view action button or the command palette
-
 ### Preview Mode
 
 View your diagrams full-screen with pan and zoom support.
@@ -63,6 +57,12 @@ graph TD
     C --> E[End]
     D --> E
 ```
+
+## Usage
+
+1. Create a new `.mermaid` (or `.mmd`) file or use the "New mermaid" context menu option
+2. Write your Mermaid diagram syntax
+3. Toggle between modes using the view action button or the command palette
 
 ## Installation
 
