@@ -2,7 +2,7 @@
 
 An Obsidian plugin that treats [Mermaid](https://mermaid.js.org/) files as first-class citizens.
 
-Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can use to view Mermaid files and render them as interactive diagrams.
+Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can use to view Mermaid files and render them as interactive diagrams, similar to how Canvas work.
 
 ## Features
 
@@ -57,6 +57,10 @@ graph TD
 3. Copy the downloaded files into the folder
 4. Enable the plugin in Settings > Community plugins
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for details.
+
 ## License
 
-MIT
+[MIT License](LICENSE.txt)

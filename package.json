@@ -13,7 +13,10 @@
 		"mermaid",
 		"diagram"
 	],
-	"author": "weppos",
+	"author": {
+		"name": "Simone Carletti",
+		"url": "https://simonecarletti.com"
+	},
 	"license": "MIT",
 	"devDependencies": {
 		"@codemirror/language": "^6.12.1",
