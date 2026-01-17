@@ -47,7 +47,7 @@ export default class MermaidViewPlugin extends Plugin {
 					if (!folder) return;
 
 					menu.addItem((item) => {
-						item.setTitle("New mermaid")
+						item.setTitle("New Mermaid file")
 							.setIcon("diamond")
 							.onClick(() => this.createMermaidFile(folder));
 					});
@@ -105,19 +105,22 @@ export default class MermaidViewPlugin extends Plugin {
 		if (!extension || !this.settings.extensions.includes(extension)) return;
 
 		// Render the mermaid embed
-		this.renderMermaidEmbed(el, src);
+		void this.renderMermaidEmbed(el, src);
 	}
 
 	private async renderMermaidEmbed(container: HTMLElement, src: string): Promise<void> {
 		// Find the file - try multiple resolution methods
-		let linkedFile = this.app.metadataCache.getFirstLinkpathDest(src, "");
+		let linkedFile: TFile | null = this.app.metadataCache.getFirstLinkpathDest(src, "");
 
 		if (!linkedFile) {
 			// Try finding by path directly
-			linkedFile = this.app.vault.getAbstractFileByPath(src);
+			const abstractFile = this.app.vault.getAbstractFileByPath(src);
+			if (abstractFile instanceof TFile) {
+				linkedFile = abstractFile;
+			}
 		}
 
-		if (!(linkedFile instanceof TFile)) return;
+		if (!linkedFile) return;
 
 		// Read the mermaid file content
 		const content = await this.app.vault.read(linkedFile);
@@ -129,6 +132,7 @@ export default class MermaidViewPlugin extends Plugin {
 
 		const mermaidMarkdown = "```mermaid\n" + content.trim() + "\n```";
 
+		/* eslint-disable obsidianmd/no-plugin-as-component -- embed rendering is short-lived */
 		await MarkdownRenderer.render(
 			this.app,
 			mermaidMarkdown,
@@ -136,6 +140,7 @@ export default class MermaidViewPlugin extends Plugin {
 			linkedFile.path,
 			this
 		);
+		/* eslint-enable obsidianmd/no-plugin-as-component */
 	}
 
 	async createMermaidFile(folder: TFolder): Promise<void> {
@@ -164,7 +169,7 @@ export default class MermaidViewPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MermaidViewSettings>);
 	}
 
 	async saveSettings(): Promise<void> {

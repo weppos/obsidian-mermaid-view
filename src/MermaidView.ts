@@ -156,7 +156,7 @@ export class MermaidView extends TextFileView {
 		});
 
 		if (this.mode === "preview" || this.mode === "split") {
-			this.renderPreview();
+			void this.renderPreview();
 		}
 	}
 
@@ -188,12 +188,12 @@ export class MermaidView extends TextFileView {
 		if (mode === "preview") {
 			this.sourceEl.hide();
 			this.previewEl.show();
-			this.renderPreview();
+			void this.renderPreview();
 		} else if (mode === "split") {
 			this.contentEl.addClass(`mermaid-layout-${this.plugin.settings.splitLayout}`);
 			this.sourceEl.show();
 			this.previewEl.show();
-			this.renderPreview();
+			void this.renderPreview();
 		} else {
 			this.previewEl.hide();
 			this.sourceEl.show();
@@ -225,7 +225,7 @@ export class MermaidView extends TextFileView {
 		}
 		this.renderDebounceTimer = window.setTimeout(() => {
 			this.renderDebounceTimer = null;
-			this.renderPreview(true);
+			void this.renderPreview(true);
 		}, this.RENDER_DEBOUNCE_MS);
 	}
 
@@ -263,7 +263,7 @@ export class MermaidView extends TextFileView {
 			this.zoomWrapper.empty();
 			this.zoomWrapper.createDiv({
 				cls: "mermaid-view-error",
-				text: `Error rendering diagram:\n${error}`,
+				text: `Error rendering diagram:\n${String(error)}`,
 			});
 		}
 	}

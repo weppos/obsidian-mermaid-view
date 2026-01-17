@@ -3,10 +3,12 @@
 	"version": "0.1.0",
 	"description": "Obsidian plugin for viewing Mermaid files in views.",
 	"main": "main.js",
+	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production",
-		"test": "vitest"
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"test": "vitest",
+		"lint": "eslint ."
 	},
 	"keywords": [
 		"obsidian",
@@ -18,15 +20,22 @@
 		"url": "https://simonecarletti.com"
 	},
 	"license": "MIT",
+	"dependencies": {
+		"obsidian": "latest"
+	},
 	"devDependencies": {
+		"@codemirror/commands": "^6.8.1",
 		"@codemirror/language": "^6.10.8",
 		"@codemirror/state": "^6.5.0",
 		"@codemirror/view": "^6.36.5",
+		"@eslint/js": "^9.30.1",
 		"@types/node": "^20.11.0",
-		"builtin-modules": "^3.3.0",
 		"esbuild": "^0.20.0",
-		"obsidian": "^1.6.0",
+		"eslint-plugin-obsidianmd": "^0.1.9",
+		"globals": "^14.0.0",
+		"jiti": "^2.6.1",
 		"typescript": "^5.3.0",
+		"typescript-eslint": "^8.35.1",
 		"vitest": "^4.0.17"
 	}
 }
