@@ -225,13 +225,15 @@ export class MermaidView extends TextFileView {
 		}
 		this.renderDebounceTimer = window.setTimeout(() => {
 			this.renderDebounceTimer = null;
-			this.renderPreview();
+			this.renderPreview(true);
 		}, this.RENDER_DEBOUNCE_MS);
 	}
 
-	private async renderPreview(): Promise<void> {
+	private async renderPreview(preserveZoom = false): Promise<void> {
 		this.zoomWrapper.empty();
-		this.resetZoom();
+		if (!preserveZoom) {
+			this.resetZoom();
+		}
 
 		const content = this.data.trim();
 
