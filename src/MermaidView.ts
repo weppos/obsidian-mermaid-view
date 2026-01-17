@@ -172,7 +172,7 @@ export class MermaidView extends TextFileView {
 		this.previewEl.empty();
 	}
 
-	private setMode(mode: ViewMode): void {
+	setMode(mode: ViewMode): void {
 		this.mode = mode;
 
 		// Remove mode and layout classes

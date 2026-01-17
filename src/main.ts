@@ -37,7 +37,16 @@ export default class MermaidViewPlugin extends Plugin {
 			},
 		});
 
-		// Add "New mermaid" to file explorer context menu
+		// Add command to create a new mermaid file
+		this.addCommand({
+			id: "create-mermaid-file",
+			name: "Create new Mermaid file",
+			callback: () => {
+				void this.createNewMermaidFile();
+			},
+		});
+
+		// Add "New Mermaid file" to file explorer context menu
 		this.registerEvent(
 			this.app.workspace.on(
 				"file-menu",
@@ -144,6 +153,17 @@ export default class MermaidViewPlugin extends Plugin {
 	}
 
 	async createMermaidFile(folder: TFolder): Promise<void> {
+		await this.createMermaidFileInFolder(folder, false);
+	}
+
+	private async createNewMermaidFile(): Promise<void> {
+		// Determine the folder: use active file's folder or vault root
+		const activeFile = this.app.workspace.getActiveFile();
+		const folder = activeFile?.parent ?? this.app.vault.getRoot();
+		await this.createMermaidFileInFolder(folder, true);
+	}
+
+	private async createMermaidFileInFolder(folder: TFolder, openInSourceMode: boolean): Promise<void> {
 		const extension = this.settings.extensions[0] || "mermaid";
 		const baseName = "Untitled";
 		let fileName = `${baseName}.${extension}`;
@@ -162,6 +182,14 @@ export default class MermaidViewPlugin extends Plugin {
 		const file = await this.app.vault.create(filePath, "");
 		const leaf = this.app.workspace.getLeaf();
 		await leaf.openFile(file);
+
+		// Switch to source mode if requested
+		if (openInSourceMode) {
+			const view = this.app.workspace.getActiveViewOfType(MermaidView);
+			if (view) {
+				view.setMode("source");
+			}
+		}
 	}
 
 	onunload(): void {
