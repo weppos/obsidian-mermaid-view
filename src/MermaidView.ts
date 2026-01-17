@@ -235,7 +235,7 @@ export class MermaidView extends TextFileView {
 			this.resetZoom();
 		}
 
-		const content = this.data.trim();
+		const content = (this.data ?? "").trim();
 
 		if (!content) {
 			this.zoomWrapper.createDiv({
