@@ -53,6 +53,7 @@ export class MermaidView extends TextFileView {
 	}
 
 	async onOpen(): Promise<void> {
+		await super.onOpen();
 		const container = this.contentEl;
 		container.empty();
 		container.addClass("mermaid-view-container");
@@ -137,6 +138,7 @@ export class MermaidView extends TextFileView {
 	async onClose(): Promise<void> {
 		this.editorView.destroy();
 		this.contentEl.empty();
+		await super.onClose();
 	}
 
 	getViewData(): string {
