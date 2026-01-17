@@ -8,7 +8,7 @@ import type MermaidViewPlugin from "./main";
 
 export const VIEW_TYPE_MERMAID = "mermaid-view";
 
-type ViewMode = "preview" | "source";
+type ViewMode = "preview" | "split" | "source";
 
 export class MermaidView extends TextFileView {
 	plugin: MermaidViewPlugin;
@@ -27,6 +27,10 @@ export class MermaidView extends TextFileView {
 	private startY = 0;
 	private readonly MIN_SCALE = 0.1;
 	private readonly MAX_SCALE = 5;
+
+	// Debounce timer for live preview
+	private renderDebounceTimer: number | null = null;
+	private readonly RENDER_DEBOUNCE_MS = 300;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MermaidViewPlugin) {
 		super(leaf);
@@ -82,6 +86,11 @@ export class MermaidView extends TextFileView {
 		this.editorEl.addEventListener("input", () => {
 			this.data = this.editorEl.value;
 			this.requestSave();
+
+			// Live preview update in split mode (debounced)
+			if (this.mode === "split") {
+				this.debouncedRenderPreview();
+			}
 		});
 
 		// Add view action button for toggling mode
@@ -110,7 +119,7 @@ export class MermaidView extends TextFileView {
 		this.data = data;
 		this.editorEl.value = data;
 
-		if (this.mode === "preview") {
+		if (this.mode === "preview" || this.mode === "split") {
 			this.renderPreview();
 		}
 	}
@@ -124,9 +133,18 @@ export class MermaidView extends TextFileView {
 	private setMode(mode: ViewMode): void {
 		this.mode = mode;
 
+		// Remove mode classes
+		this.contentEl.removeClass("mermaid-mode-preview", "mermaid-mode-split", "mermaid-mode-source");
+		this.contentEl.addClass(`mermaid-mode-${mode}`);
+
 		if (mode === "preview") {
 			this.sourceEl.hide();
 			this.previewEl.show();
+			this.renderPreview();
+		} else if (mode === "split") {
+			this.sourceEl.show();
+			this.previewEl.show();
+			this.editorEl.value = this.data;
 			this.renderPreview();
 		} else {
 			this.previewEl.hide();
@@ -135,18 +153,33 @@ export class MermaidView extends TextFileView {
 			this.editorEl.focus();
 		}
 
-		// Update the action button icon
+		// Update the action button icon and label
 		const actionButton = this.contentEl.parentElement?.querySelector(
-			'.view-action[aria-label="Toggle source/preview"]'
+			'.view-action[aria-label^="Toggle"]'
 		);
 		if (actionButton) {
 			actionButton.empty();
-			setIcon(actionButton as HTMLElement, mode === "preview" ? "code" : "eye");
+			const icon = mode === "preview" ? "columns" : mode === "split" ? "code" : "eye";
+			setIcon(actionButton as HTMLElement, icon);
+			actionButton.setAttribute("aria-label", `Toggle view mode (${mode})`);
 		}
 	}
 
 	toggleMode(): void {
-		this.setMode(this.mode === "preview" ? "source" : "preview");
+		const nextMode: ViewMode =
+			this.mode === "preview" ? "split" :
+			this.mode === "split" ? "source" : "preview";
+		this.setMode(nextMode);
+	}
+
+	private debouncedRenderPreview(): void {
+		if (this.renderDebounceTimer !== null) {
+			window.clearTimeout(this.renderDebounceTimer);
+		}
+		this.renderDebounceTimer = window.setTimeout(() => {
+			this.renderDebounceTimer = null;
+			this.renderPreview();
+		}, this.RENDER_DEBOUNCE_MS);
 	}
 
 	private async renderPreview(): Promise<void> {

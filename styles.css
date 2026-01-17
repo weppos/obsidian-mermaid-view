@@ -8,6 +8,22 @@
 	overflow: hidden;
 }
 
+/* Split mode - side by side layout */
+.mermaid-view-container.mermaid-mode-split {
+	flex-direction: row;
+}
+
+.mermaid-mode-split .mermaid-view-source {
+	width: 50%;
+	height: 100%;
+	border-right: 1px solid var(--background-modifier-border);
+}
+
+.mermaid-mode-split .mermaid-view-preview {
+	width: 50%;
+	height: 100%;
+}
+
 /* Preview Mode - Fullscreen Diagram */
 .mermaid-view-preview {
 	height: 100%;
