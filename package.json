@@ -16,6 +16,9 @@
 	"author": "weppos",
 	"license": "MIT",
 	"devDependencies": {
+		"@codemirror/language": "^6.12.1",
+		"@codemirror/state": "^6.5.4",
+		"@codemirror/view": "^6.39.11",
 		"@types/node": "^20.11.0",
 		"builtin-modules": "^3.3.0",
 		"esbuild": "^0.20.0",

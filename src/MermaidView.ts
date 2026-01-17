@@ -4,6 +4,9 @@ import {
 	MarkdownRenderer,
 	setIcon,
 } from "obsidian";
+import { EditorView, lineNumbers, highlightActiveLine, drawSelection, keymap } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import type MermaidViewPlugin from "./main";
 
 export const VIEW_TYPE_MERMAID = "mermaid-view";
@@ -15,7 +18,7 @@ export class MermaidView extends TextFileView {
 	private mode: ViewMode = "preview";
 	private previewEl: HTMLElement;
 	private sourceEl: HTMLElement;
-	private editorEl: HTMLTextAreaElement;
+	private editorView: EditorView;
 
 	// Pan/zoom state
 	private zoomWrapper: HTMLElement;
@@ -65,32 +68,56 @@ export class MermaidView extends TextFileView {
 
 		// Create source editor container
 		this.sourceEl = container.createDiv({ cls: "mermaid-view-source" });
-		this.editorEl = this.sourceEl.createEl("textarea");
-		this.editorEl.addClass("mermaid-view-editor");
-		this.editorEl.spellcheck = false;
 
-		// Style the textarea to fill the container
-		this.editorEl.style.width = "100%";
-		this.editorEl.style.height = "100%";
-		this.editorEl.style.resize = "none";
-		this.editorEl.style.border = "none";
-		this.editorEl.style.outline = "none";
-		this.editorEl.style.padding = "20px";
-		this.editorEl.style.fontFamily = "var(--font-monospace)";
-		this.editorEl.style.fontSize = "var(--font-text-size)";
-		this.editorEl.style.backgroundColor = "var(--background-primary)";
-		this.editorEl.style.color = "var(--text-normal)";
-		this.editorEl.style.boxSizing = "border-box";
+		// Create CodeMirror editor
+		this.editorView = new EditorView({
+			state: EditorState.create({
+				doc: "",
+				extensions: [
+					lineNumbers(),
+					highlightActiveLine(),
+					drawSelection(),
+					history(),
+					keymap.of([...defaultKeymap, ...historyKeymap]),
+					EditorView.updateListener.of((update) => {
+						if (update.docChanged) {
+							this.data = update.state.doc.toString();
+							this.requestSave();
 
-		// Listen for changes in the editor
-		this.editorEl.addEventListener("input", () => {
-			this.data = this.editorEl.value;
-			this.requestSave();
-
-			// Live preview update in split mode (debounced)
-			if (this.mode === "split") {
-				this.debouncedRenderPreview();
-			}
+							// Live preview update in split mode (debounced)
+							if (this.mode === "split") {
+								this.debouncedRenderPreview();
+							}
+						}
+					}),
+					EditorView.theme({
+						"&": {
+							height: "100%",
+							backgroundColor: "var(--background-primary)",
+						},
+						".cm-scroller": {
+							fontFamily: "var(--font-monospace)",
+							fontSize: "var(--font-text-size)",
+							overflow: "auto",
+						},
+						".cm-content": {
+							caretColor: "var(--text-normal)",
+						},
+						".cm-gutters": {
+							backgroundColor: "var(--background-secondary)",
+							color: "var(--text-muted)",
+							border: "none",
+						},
+						".cm-activeLineGutter": {
+							backgroundColor: "var(--background-modifier-hover)",
+						},
+						".cm-activeLine": {
+							backgroundColor: "var(--background-modifier-hover)",
+						},
+					}),
+				],
+			}),
+			parent: this.sourceEl,
 		});
 
 		// Add view action button for toggling mode
@@ -108,6 +135,7 @@ export class MermaidView extends TextFileView {
 	}
 
 	async onClose(): Promise<void> {
+		this.editorView.destroy();
 		this.contentEl.empty();
 	}
 
@@ -117,7 +145,15 @@ export class MermaidView extends TextFileView {
 
 	setViewData(data: string, clear: boolean): void {
 		this.data = data;
-		this.editorEl.value = data;
+
+		// Update CodeMirror content
+		this.editorView.dispatch({
+			changes: {
+				from: 0,
+				to: this.editorView.state.doc.length,
+				insert: data,
+			},
+		});
 
 		if (this.mode === "preview" || this.mode === "split") {
 			this.renderPreview();
@@ -126,7 +162,13 @@ export class MermaidView extends TextFileView {
 
 	clear(): void {
 		this.data = "";
-		this.editorEl.value = "";
+		this.editorView.dispatch({
+			changes: {
+				from: 0,
+				to: this.editorView.state.doc.length,
+				insert: "",
+			},
+		});
 		this.previewEl.empty();
 	}
 
@@ -151,13 +193,11 @@ export class MermaidView extends TextFileView {
 			this.contentEl.addClass(`mermaid-layout-${this.plugin.settings.splitLayout}`);
 			this.sourceEl.show();
 			this.previewEl.show();
-			this.editorEl.value = this.data;
 			this.renderPreview();
 		} else {
 			this.previewEl.hide();
 			this.sourceEl.show();
-			this.editorEl.value = this.data;
-			this.editorEl.focus();
+			this.editorView.focus();
 		}
 
 		// Update the action button icon and label
