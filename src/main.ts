@@ -1,4 +1,4 @@
-import { MarkdownRenderer, Menu, Plugin, TAbstractFile, TFile, TFolder } from "obsidian";
+import { Component, MarkdownRenderer, Menu, Plugin, TAbstractFile, TFile, TFolder } from "obsidian";
 import { MermaidView, VIEW_TYPE_MERMAID } from "./MermaidView";
 import {
 	MermaidViewSettings,
@@ -141,15 +141,16 @@ export default class MermaidViewPlugin extends Plugin {
 
 		const mermaidMarkdown = "```mermaid\n" + content.trim() + "\n```";
 
-		/* eslint-disable obsidianmd/no-plugin-as-component -- embed rendering is short-lived */
+		const embedComponent = new Component();
+		this.addChild(embedComponent);
+
 		await MarkdownRenderer.render(
 			this.app,
 			mermaidMarkdown,
 			container,
 			linkedFile.path,
-			this
+			embedComponent
 		);
-		/* eslint-enable obsidianmd/no-plugin-as-component */
 	}
 
 	async createMermaidFile(folder: TFolder): Promise<void> {

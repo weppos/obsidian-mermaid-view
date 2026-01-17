@@ -40,8 +40,6 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 			)
 			.addText((text) =>
 				text
-					// eslint-disable-next-line obsidianmd/ui/sentence-case -- file extensions are lowercase
-					.setPlaceholder("mermaid, mmd")
 					.setValue(this.plugin.settings.extensions.join(", "))
 					.onChange(async (value) => {
 						this.plugin.settings.extensions = parseExtensions(value);
@@ -50,8 +48,7 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 			);
 
 		containerEl.createEl("p", {
-			// eslint-disable-next-line obsidianmd/ui/sentence-case -- "Note:" prefix is intentional
-			text: "Note: After changing extensions, you need to restart Obsidian for the changes to take effect.",
+			text: "Restart Obsidian after changing extensions for the changes to take effect.",
 			cls: "setting-item-description",
 		});
 
