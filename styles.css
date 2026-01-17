@@ -13,15 +13,30 @@
 	flex-direction: row;
 }
 
-.mermaid-mode-split .mermaid-view-source {
-	width: 50%;
-	height: 100%;
-	border-right: 1px solid var(--background-modifier-border);
-}
-
+.mermaid-mode-split .mermaid-view-source,
 .mermaid-mode-split .mermaid-view-preview {
 	width: 50%;
 	height: 100%;
+}
+
+/* Editor left (default) */
+.mermaid-layout-editor-left .mermaid-view-source {
+	order: 1;
+	border-right: 1px solid var(--background-modifier-border);
+}
+
+.mermaid-layout-editor-left .mermaid-view-preview {
+	order: 2;
+}
+
+/* Editor right */
+.mermaid-layout-editor-right .mermaid-view-source {
+	order: 2;
+	border-left: 1px solid var(--background-modifier-border);
+}
+
+.mermaid-layout-editor-right .mermaid-view-preview {
+	order: 1;
 }
 
 /* Preview Mode - Fullscreen Diagram */

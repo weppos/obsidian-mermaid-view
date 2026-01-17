@@ -133,8 +133,14 @@ export class MermaidView extends TextFileView {
 	private setMode(mode: ViewMode): void {
 		this.mode = mode;
 
-		// Remove mode classes
-		this.contentEl.removeClass("mermaid-mode-preview", "mermaid-mode-split", "mermaid-mode-source");
+		// Remove mode and layout classes
+		this.contentEl.removeClass(
+			"mermaid-mode-preview",
+			"mermaid-mode-split",
+			"mermaid-mode-source",
+			"mermaid-layout-editor-left",
+			"mermaid-layout-editor-right"
+		);
 		this.contentEl.addClass(`mermaid-mode-${mode}`);
 
 		if (mode === "preview") {
@@ -142,6 +148,7 @@ export class MermaidView extends TextFileView {
 			this.previewEl.show();
 			this.renderPreview();
 		} else if (mode === "split") {
+			this.contentEl.addClass(`mermaid-layout-${this.plugin.settings.splitLayout}`);
 			this.sourceEl.show();
 			this.previewEl.show();
 			this.editorEl.value = this.data;

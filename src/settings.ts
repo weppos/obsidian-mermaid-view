@@ -1,12 +1,16 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type MermaidViewPlugin from "./main";
 
+export type SplitLayout = "editor-left" | "editor-right";
+
 export interface MermaidViewSettings {
 	extensions: string[];
+	splitLayout: SplitLayout;
 }
 
 export const DEFAULT_SETTINGS: MermaidViewSettings = {
 	extensions: ["mermaid", "mmd"],
+	splitLayout: "editor-left",
 };
 
 export function parseExtensions(value: string): string[] {
@@ -48,5 +52,19 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 			text: "Note: After changing extensions, you need to restart Obsidian for the changes to take effect.",
 			cls: "setting-item-description",
 		});
+
+		new Setting(containerEl)
+			.setName("Split view layout")
+			.setDesc("Choose the position of the editor and preview in split mode.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("editor-left", "Editor left, preview right")
+					.addOption("editor-right", "Editor right, preview left")
+					.setValue(this.plugin.settings.splitLayout)
+					.onChange(async (value: SplitLayout) => {
+						this.plugin.settings.splitLayout = value;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }
