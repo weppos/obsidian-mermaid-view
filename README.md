@@ -25,7 +25,35 @@ Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can u
 2. Write your Mermaid diagram syntax
 3. Toggle between modes using the view action button or the command palette
 
-Example diagram:
+### Preview Mode
+
+View your diagrams full-screen with pan and zoom support.
+
+![Preview mode](https://simonecarletti.com/uploads/obsidian-mermaid-view/preview-mode.png)
+
+### Split Mode
+
+Edit with a side-by-side code editor and live preview.
+
+![Split mode](https://simonecarletti.com/uploads/obsidian-mermaid-view/split-mode.png)
+
+### Pan and Zoom
+
+Navigate large diagrams with mouse wheel zoom and click-drag panning. Double-click to reset the view.
+
+![Zoom](https://simonecarletti.com/uploads/obsidian-mermaid-view/zoom.png)
+
+### Embed in Notes
+
+Include diagrams in your notes using standard Obsidian embed syntax. The autocomplete suggests mermaid files just like any other note.
+
+![Linking autocomplete](https://simonecarletti.com/uploads/obsidian-mermaid-view/linking-autocomplete.png)
+
+The diagram renders inline within your note.
+
+![Embedded diagram](https://simonecarletti.com/uploads/obsidian-mermaid-view/embed.png)
+
+### Example Diagram
 
 ```
 graph TD
