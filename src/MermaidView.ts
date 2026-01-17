@@ -270,7 +270,7 @@ export class MermaidView extends TextFileView {
 
 	private setupPanZoom(): void {
 		// Wheel event for zooming
-		this.previewEl.addEventListener("wheel", (e: WheelEvent) => {
+		this.registerDomEvent(this.previewEl, "wheel", (e: WheelEvent) => {
 			e.preventDefault();
 
 			const rect = this.previewEl.getBoundingClientRect();
@@ -291,10 +291,10 @@ export class MermaidView extends TextFileView {
 			this.scale = newScale;
 
 			this.applyTransform();
-		});
+		}, { passive: false });
 
 		// Mouse events for panning
-		this.previewEl.addEventListener("mousedown", (e: MouseEvent) => {
+		this.registerDomEvent(this.previewEl, "mousedown", (e: MouseEvent) => {
 			if (e.button !== 0) return; // Only left click
 			this.isPanning = true;
 			this.startX = e.clientX - this.translateX;
@@ -302,25 +302,25 @@ export class MermaidView extends TextFileView {
 			this.previewEl.addClass("mermaid-view-panning");
 		});
 
-		this.previewEl.addEventListener("mousemove", (e: MouseEvent) => {
+		this.registerDomEvent(this.previewEl, "mousemove", (e: MouseEvent) => {
 			if (!this.isPanning) return;
 			this.translateX = e.clientX - this.startX;
 			this.translateY = e.clientY - this.startY;
 			this.applyTransform();
 		});
 
-		this.previewEl.addEventListener("mouseup", () => {
+		this.registerDomEvent(this.previewEl, "mouseup", () => {
 			this.isPanning = false;
 			this.previewEl.removeClass("mermaid-view-panning");
 		});
 
-		this.previewEl.addEventListener("mouseleave", () => {
+		this.registerDomEvent(this.previewEl, "mouseleave", () => {
 			this.isPanning = false;
 			this.previewEl.removeClass("mermaid-view-panning");
 		});
 
 		// Double-click to reset
-		this.previewEl.addEventListener("dblclick", () => {
+		this.registerDomEvent(this.previewEl, "dblclick", () => {
 			this.resetZoom();
 		});
 	}
