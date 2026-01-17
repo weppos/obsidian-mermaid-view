@@ -1,8 +1,14 @@
 # Dependencies
 node_modules/
 
-# Build outputs (keep main.js for releases)
+# Build outputs
 *.map
+# Don't include the compiled main.js file in the repo.
+# They should be uploaded to GitHub releases instead.
+main.js
 
-# Debug
-npm-debug.log*
+# Obsidian
+data.json
+
+# Local configs
+.claude/
