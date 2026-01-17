@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-mermaid",
 	"version": "0.1.0",
-	"description": "Obsidian plugin for viewing Mermaid files as rendered diagrams",
+	"description": "Obsidian plugin for viewing Mermaid files in views.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

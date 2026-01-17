@@ -1,6 +1,8 @@
 # Mermaid View for Obsidian
 
-An Obsidian plugin that treats [Mermaid](https://mermaid.js.org/) files as first-class citizens, rendering them as interactive diagrams.
+An Obsidian plugin that treats [Mermaid](https://mermaid.js.org/) files as first-class citizens.
+
+Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can use to view Mermaid files and render them as interactive diagrams.
 
 ## Features
 
