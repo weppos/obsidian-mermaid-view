@@ -6,24 +6,18 @@ Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can u
 
 ## Features
 
-- **Native file support** - Open `.mermaid` and `.mmd` files directly in Obsidian, just like markdown or canvas files
-
+- **Native file support** - Open `.mermaid` and `.mmd` files directly in Obsidian, just like markdown or canvas files.
 - **Three view modes** - Toggle between preview, split, and source modes:
   - **Preview**: Full-screen rendered diagram
   - **Split**: Side-by-side editor and live preview
   - **Source**: Full-screen code editor
-
 - **Pan and zoom** - Navigate large diagrams with mouse wheel zoom and click-drag panning. Double-click to reset.
-
-- **CodeMirror editor** - Full-featured editor with line numbers, syntax highlighting, undo/redo, and standard keyboard shortcuts
-
+- **CodeMirror editor** - Full-featured editor with line numbers, syntax highlighting, undo/redo, and standard keyboard shortcuts.
 - **Embed in notes** - Include mermaid diagrams in other notes using standard embed syntax:
-
   ```
   ![[diagram.mermaid]]
   ```
-
-- **Context menu integration** - Right-click in the file explorer to create a new mermaid file
+- **Menu integration** - Right-click in the file explorer to create a new Mermaid file, or use the command palette.
 
 ## Usage
 
