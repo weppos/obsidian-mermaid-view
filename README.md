@@ -57,4 +57,4 @@ See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## License
 
-[MIT License](LICENSE.txt)
+[MIT License](LICENSE)
