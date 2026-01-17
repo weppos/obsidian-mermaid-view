@@ -12,22 +12,32 @@
 .mermaid-view-preview {
 	height: 100%;
 	width: 100%;
-	overflow: auto;
+	overflow: hidden;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 20px;
 	box-sizing: border-box;
+	cursor: grab;
+}
+
+.mermaid-view-preview.mermaid-view-panning {
+	cursor: grabbing;
+}
+
+/* Zoom wrapper for pan/zoom transforms */
+.mermaid-zoom-wrapper {
+	transform-origin: 0 0;
+	will-change: transform;
 }
 
 .mermaid-view-preview .mermaid {
-	max-width: 100%;
-	max-height: 100%;
+	max-width: none;
+	max-height: none;
 }
 
-/* Ensure the rendered SVG scales properly */
+/* Ensure the rendered SVG doesn't constrain zoom */
 .mermaid-view-preview svg {
-	max-width: 100%;
+	max-width: none;
 	height: auto;
 }
 

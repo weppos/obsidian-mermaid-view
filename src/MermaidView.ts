@@ -17,6 +17,17 @@ export class MermaidView extends TextFileView {
 	private sourceEl: HTMLElement;
 	private editorEl: HTMLTextAreaElement;
 
+	// Pan/zoom state
+	private zoomWrapper: HTMLElement;
+	private scale = 1;
+	private translateX = 0;
+	private translateY = 0;
+	private isPanning = false;
+	private startX = 0;
+	private startY = 0;
+	private readonly MIN_SCALE = 0.1;
+	private readonly MAX_SCALE = 5;
+
 	constructor(leaf: WorkspaceLeaf, plugin: MermaidViewPlugin) {
 		super(leaf);
 		this.plugin = plugin;
@@ -41,6 +52,12 @@ export class MermaidView extends TextFileView {
 
 		// Create preview container
 		this.previewEl = container.createDiv({ cls: "mermaid-view-preview" });
+
+		// Create zoom wrapper inside preview
+		this.zoomWrapper = this.previewEl.createDiv({ cls: "mermaid-zoom-wrapper" });
+
+		// Set up pan/zoom event handlers
+		this.setupPanZoom();
 
 		// Create source editor container
 		this.sourceEl = container.createDiv({ cls: "mermaid-view-source" });
@@ -70,6 +87,11 @@ export class MermaidView extends TextFileView {
 		// Add view action button for toggling mode
 		this.addAction("code", "Toggle source/preview", () => {
 			this.toggleMode();
+		});
+
+		// Add reset zoom button
+		this.addAction("maximize", "Reset zoom", () => {
+			this.resetZoom();
 		});
 
 		// Set initial mode
@@ -128,12 +150,13 @@ export class MermaidView extends TextFileView {
 	}
 
 	private async renderPreview(): Promise<void> {
-		this.previewEl.empty();
+		this.zoomWrapper.empty();
+		this.resetZoom();
 
 		const content = this.data.trim();
 
 		if (!content) {
-			this.previewEl.createDiv({
+			this.zoomWrapper.createDiv({
 				cls: "mermaid-view-empty",
 				text: "Empty diagram. Switch to source mode to add content.",
 			});
@@ -141,7 +164,7 @@ export class MermaidView extends TextFileView {
 		}
 
 		// Create a wrapper for the mermaid content
-		const wrapper = this.previewEl.createDiv();
+		const wrapper = this.zoomWrapper.createDiv();
 
 		// Wrap the content in a mermaid code block for rendering
 		const mermaidMarkdown = "```mermaid\n" + content + "\n```";
@@ -155,11 +178,79 @@ export class MermaidView extends TextFileView {
 				this
 			);
 		} catch (error) {
-			this.previewEl.empty();
-			this.previewEl.createDiv({
+			this.zoomWrapper.empty();
+			this.zoomWrapper.createDiv({
 				cls: "mermaid-view-error",
 				text: `Error rendering diagram:\n${error}`,
 			});
 		}
+	}
+
+	private setupPanZoom(): void {
+		// Wheel event for zooming
+		this.previewEl.addEventListener("wheel", (e: WheelEvent) => {
+			e.preventDefault();
+
+			const rect = this.previewEl.getBoundingClientRect();
+			const mouseX = e.clientX - rect.left;
+			const mouseY = e.clientY - rect.top;
+
+			// Calculate zoom
+			const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+			const newScale = Math.min(
+				this.MAX_SCALE,
+				Math.max(this.MIN_SCALE, this.scale * zoomFactor)
+			);
+
+			// Zoom toward mouse position
+			const scaleChange = newScale / this.scale;
+			this.translateX = mouseX - scaleChange * (mouseX - this.translateX);
+			this.translateY = mouseY - scaleChange * (mouseY - this.translateY);
+			this.scale = newScale;
+
+			this.applyTransform();
+		});
+
+		// Mouse events for panning
+		this.previewEl.addEventListener("mousedown", (e: MouseEvent) => {
+			if (e.button !== 0) return; // Only left click
+			this.isPanning = true;
+			this.startX = e.clientX - this.translateX;
+			this.startY = e.clientY - this.translateY;
+			this.previewEl.addClass("mermaid-view-panning");
+		});
+
+		this.previewEl.addEventListener("mousemove", (e: MouseEvent) => {
+			if (!this.isPanning) return;
+			this.translateX = e.clientX - this.startX;
+			this.translateY = e.clientY - this.startY;
+			this.applyTransform();
+		});
+
+		this.previewEl.addEventListener("mouseup", () => {
+			this.isPanning = false;
+			this.previewEl.removeClass("mermaid-view-panning");
+		});
+
+		this.previewEl.addEventListener("mouseleave", () => {
+			this.isPanning = false;
+			this.previewEl.removeClass("mermaid-view-panning");
+		});
+
+		// Double-click to reset
+		this.previewEl.addEventListener("dblclick", () => {
+			this.resetZoom();
+		});
+	}
+
+	private applyTransform(): void {
+		this.zoomWrapper.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+	}
+
+	private resetZoom(): void {
+		this.scale = 1;
+		this.translateX = 0;
+		this.translateY = 0;
+		this.applyTransform();
 	}
 }
