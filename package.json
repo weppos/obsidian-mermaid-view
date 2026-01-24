@@ -36,6 +36,6 @@
 		"jiti": "^2.6.1",
 		"typescript": "^5.3.0",
 		"typescript-eslint": "^8.35.1",
-		"vitest": "^4.0.17"
+		"vitest": "^4.0.18"
 	}
 }
