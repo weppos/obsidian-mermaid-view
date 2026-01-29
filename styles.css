@@ -49,6 +49,7 @@
 	justify-content: center;
 	box-sizing: border-box;
 	cursor: grab;
+	position: relative;
 }
 
 .mermaid-view-preview.mermaid-view-panning {
@@ -64,6 +65,27 @@
 .mermaid-zoom-wrapper {
 	transform-origin: 0 0;
 	will-change: transform;
+}
+
+/* Zoom indicator */
+.mermaid-zoom-indicator {
+	position: absolute;
+	bottom: 12px;
+	right: 12px;
+	padding: 4px 8px;
+	background-color: var(--background-secondary);
+	border-radius: var(--radius-s);
+	font-size: var(--font-smaller);
+	font-family: var(--font-monospace);
+	color: var(--text-muted);
+	opacity: 0;
+	transition: opacity 150ms ease-in-out;
+	pointer-events: none;
+	z-index: 10;
+}
+
+.mermaid-zoom-indicator.mermaid-zoom-indicator-active {
+	opacity: 1;
 }
 
 .mermaid-view-preview .mermaid {

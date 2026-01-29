@@ -35,6 +35,9 @@ export class MermaidView extends TextFileView {
 	private initialPinchDistance = 0;
 	private initialPinchScale = 1;
 
+	// Zoom indicator
+	private zoomIndicator: HTMLElement;
+
 	// Debounce timer for live preview
 	private renderDebounceTimer: number | null = null;
 	private readonly RENDER_DEBOUNCE_MS = 300;
@@ -67,6 +70,12 @@ export class MermaidView extends TextFileView {
 
 		// Create zoom wrapper inside preview
 		this.zoomWrapper = this.previewEl.createDiv({ cls: "mermaid-zoom-wrapper" });
+
+		// Create zoom indicator
+		this.zoomIndicator = this.previewEl.createDiv({
+			cls: "mermaid-zoom-indicator",
+			text: "100%",
+		});
 
 		// Set up pan/zoom event handlers
 		this.setupPanZoom();
@@ -397,6 +406,19 @@ export class MermaidView extends TextFileView {
 
 	private applyTransform(): void {
 		this.zoomWrapper.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+		this.updateZoomIndicator();
+	}
+
+	private updateZoomIndicator(): void {
+		const percentage = Math.round(this.scale * 100);
+		this.zoomIndicator.textContent = `${percentage}%`;
+
+		// Show/hide based on whether zoom is at default
+		if (this.scale === 1 && this.translateX === 0 && this.translateY === 0) {
+			this.zoomIndicator.removeClass("mermaid-zoom-indicator-active");
+		} else {
+			this.zoomIndicator.addClass("mermaid-zoom-indicator-active");
+		}
 	}
 
 	private resetZoom(): void {
