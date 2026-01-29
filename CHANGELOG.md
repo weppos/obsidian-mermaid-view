@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Added
+
+- Add touch gesture support for pan and zoom (pinch-to-zoom and single-finger pan for mobile/tablet).
+
 ## 0.3.0 - 2026-01-17
 
 ### Added

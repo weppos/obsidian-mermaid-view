@@ -31,6 +31,10 @@ export class MermaidView extends TextFileView {
 	private readonly MIN_SCALE = 0.1;
 	private readonly MAX_SCALE = 5;
 
+	// Touch gesture state
+	private initialPinchDistance = 0;
+	private initialPinchScale = 1;
+
 	// Debounce timer for live preview
 	private renderDebounceTimer: number | null = null;
 	private readonly RENDER_DEBOUNCE_MS = 300;
@@ -324,6 +328,70 @@ export class MermaidView extends TextFileView {
 		// Double-click to reset
 		this.registerDomEvent(this.previewEl, "dblclick", () => {
 			this.resetZoom();
+		});
+
+		// Touch events for mobile pan/zoom
+		this.registerDomEvent(this.previewEl, "touchstart", (e: TouchEvent) => {
+			const touch1 = e.touches[0];
+			const touch2 = e.touches[1];
+
+			if (e.touches.length === 2 && touch1 && touch2) {
+				// Pinch zoom start
+				this.initialPinchDistance = Math.hypot(
+					touch2.clientX - touch1.clientX,
+					touch2.clientY - touch1.clientY
+				);
+				this.initialPinchScale = this.scale;
+			} else if (e.touches.length === 1 && touch1) {
+				// Single touch pan
+				this.isPanning = true;
+				this.startX = touch1.clientX - this.translateX;
+				this.startY = touch1.clientY - this.translateY;
+				this.previewEl.addClass("mermaid-view-panning");
+			}
+		});
+
+		this.registerDomEvent(this.previewEl, "touchmove", (e: TouchEvent) => {
+			e.preventDefault();
+
+			const touch1 = e.touches[0];
+			const touch2 = e.touches[1];
+
+			if (e.touches.length === 2 && touch1 && touch2) {
+				// Pinch zoom
+				const currentDistance = Math.hypot(
+					touch2.clientX - touch1.clientX,
+					touch2.clientY - touch1.clientY
+				);
+
+				const scaleRatio = currentDistance / this.initialPinchDistance;
+				const newScale = Math.min(
+					this.MAX_SCALE,
+					Math.max(this.MIN_SCALE, this.initialPinchScale * scaleRatio)
+				);
+
+				// Zoom toward pinch center
+				const rect = this.previewEl.getBoundingClientRect();
+				const centerX = (touch1.clientX + touch2.clientX) / 2 - rect.left;
+				const centerY = (touch1.clientY + touch2.clientY) / 2 - rect.top;
+
+				const scaleChange = newScale / this.scale;
+				this.translateX = centerX - scaleChange * (centerX - this.translateX);
+				this.translateY = centerY - scaleChange * (centerY - this.translateY);
+				this.scale = newScale;
+
+				this.applyTransform();
+			} else if (e.touches.length === 1 && touch1 && this.isPanning) {
+				// Single touch pan
+				this.translateX = touch1.clientX - this.startX;
+				this.translateY = touch1.clientY - this.startY;
+				this.applyTransform();
+			}
+		}, { passive: false });
+
+		this.registerDomEvent(this.previewEl, "touchend", () => {
+			this.isPanning = false;
+			this.previewEl.removeClass("mermaid-view-panning");
 		});
 	}
 

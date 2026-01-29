@@ -55,6 +55,11 @@
 	cursor: grabbing;
 }
 
+/* Prevent default touch behaviors for pan/zoom */
+.mermaid-view-preview {
+	touch-action: none;
+}
+
 /* Zoom wrapper for pan/zoom transforms */
 .mermaid-zoom-wrapper {
 	transform-origin: 0 0;
