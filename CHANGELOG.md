@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Added
+
+- Add zoom indicator showing current zoom percentage when zoomed or panned.
+- Add zoom in/out buttons to the view action bar for precise zoom control.
+
 ## 0.3.2 - 2026-01-29
 
 ### Changed
@@ -13,8 +20,6 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 ### Added
 
 - Add touch gesture support for pan and zoom (pinch-to-zoom and single-finger pan for mobile/tablet).
-- Add zoom indicator showing current zoom percentage when zoomed or panned.
-- Add zoom in/out buttons to the view action bar for precise zoom control.
 
 ## 0.3.0 - 2026-01-17
 
