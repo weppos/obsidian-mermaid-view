@@ -8,6 +8,7 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 - Add touch gesture support for pan and zoom (pinch-to-zoom and single-finger pan for mobile/tablet).
 - Add zoom indicator showing current zoom percentage when zoomed or panned.
+- Add zoom in/out buttons to the view action bar for precise zoom control.
 
 ## 0.3.0 - 2026-01-17
 
