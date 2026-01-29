@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-mermaid-view",
-	"version": "0.3.1",
+	"version": "0.3.2",
 	"description": "Obsidian plugin for viewing Mermaid files in views.",
 	"main": "main.js",
 	"type": "module",
