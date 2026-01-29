@@ -58,6 +58,8 @@ graph TD
     D --> E
 ```
 
+More information on [Mermaid View features and usage](https://simonecarletti.com/code/obsidian-mermaid-view/).
+
 ## Usage
 
 1. Create a new `.mermaid` (or `.mmd`) file or use the "New mermaid" context menu option
