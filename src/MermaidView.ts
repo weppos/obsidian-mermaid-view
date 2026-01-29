@@ -436,7 +436,7 @@ export class MermaidView extends TextFileView {
 			cls: "mermaid-zoom-control-item",
 			attr: { "aria-label": "Reset zoom" },
 		});
-		setIcon(resetBtn, "maximize");
+		setIcon(resetBtn, "rotate-cw");
 		resetBtn.addEventListener("click", () => this.resetZoom());
 
 		const zoomOutBtn = zoomGroup.createDiv({
