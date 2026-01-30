@@ -3,16 +3,19 @@ import type MermaidViewPlugin from "./main";
 
 export type SplitLayout = "editor-left" | "editor-right";
 export type PngBackground = "transparent" | "light" | "dark" | "theme";
+export type PngScale = 1 | 2 | 3 | 4;
 
 export interface MermaidViewSettings {
 	extensions: string[];
 	splitLayout: SplitLayout;
 	pngBackground: PngBackground;
+	pngScale: PngScale;
 }
 
 export const DEFAULT_SETTINGS: MermaidViewSettings = {
 	extensions: ["mermaid", "mmd"],
 	splitLayout: "editor-left",
+	pngScale: 2,
 	pngBackground: "transparent",
 };
 
@@ -78,6 +81,22 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.pngBackground)
 					.onChange(async (value: PngBackground) => {
 						this.plugin.settings.pngBackground = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("PNG scale")
+			.setDesc("Scale factor for PNG exports. Higher values produce larger, sharper images.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("1", "1x (standard)")
+					.addOption("2", "2x (retina)")
+					.addOption("3", "3x (high resolution)")
+					.addOption("4", "4x (very high resolution)")
+					.setValue(this.plugin.settings.pngScale.toString())
+					.onChange(async (value) => {
+						this.plugin.settings.pngScale = parseInt(value) as PngScale;
 						await this.plugin.saveSettings();
 					})
 			);

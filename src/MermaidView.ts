@@ -517,11 +517,12 @@ export class MermaidView extends TextFileView {
 			item.setTitle("Export as PNG")
 				.setIcon("image")
 				.onClick(() => {
-					const { pngBackground } = this.plugin.settings;
+					const { pngBackground, pngScale } = this.plugin.settings;
 					const backgroundColor = this.resolveBackgroundColor(pngBackground);
 					void exportAsPng(svg, {
 						filename,
 						backgroundColor,
+						scale: pngScale,
 					});
 				});
 		});
