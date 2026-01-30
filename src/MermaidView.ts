@@ -4,12 +4,13 @@ import {
 	MarkdownRenderer,
 	setIcon,
 	Notice,
+	Menu,
 } from "obsidian";
 import { EditorView, lineNumbers, highlightActiveLine, drawSelection, keymap } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import type MermaidViewPlugin from "./main";
-import { exportAsSvg } from "./export";
+import { exportAsSvg, exportAsPng } from "./export";
 
 export const VIEW_TYPE_MERMAID = "mermaid-view";
 
@@ -142,8 +143,8 @@ export class MermaidView extends TextFileView {
 		});
 
 		// Add export button
-		this.addAction("download", "Export diagram", () => {
-			this.handleExport();
+		this.addAction("download", "Export diagram", (event) => {
+			this.showExportMenu(event);
 		});
 
 		// Create zoom controls panel on the right side
@@ -494,14 +495,32 @@ export class MermaidView extends TextFileView {
 		return this.zoomWrapper.querySelector(".mermaid svg");
 	}
 
-	private handleExport(): void {
+	private showExportMenu(event: MouseEvent): void {
 		const svg = this.getSvgElement();
 		if (!svg) {
 			new Notice("No diagram to export. Render a diagram first.");
 			return;
 		}
 
+		const menu = new Menu();
 		const filename = this.file?.basename ?? "diagram";
-		exportAsSvg(svg, { filename });
+
+		menu.addItem((item) => {
+			item.setTitle("Export as SVG")
+				.setIcon("file-code")
+				.onClick(() => {
+					exportAsSvg(svg, { filename });
+				});
+		});
+
+		menu.addItem((item) => {
+			item.setTitle("Export as PNG")
+				.setIcon("image")
+				.onClick(() => {
+					void exportAsPng(svg, { filename });
+				});
+		});
+
+		menu.showAtMouseEvent(event);
 	}
 }
