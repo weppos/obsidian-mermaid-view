@@ -68,18 +68,26 @@ More information on [Mermaid View features and usage](https://simonecarletti.com
 
 ## Installation
 
-### From Obsidian Community Plugins
+This plugin has been [submitted for official inclusion](https://github.com/obsidianmd/obsidian-releases/pull/9606) in Obsidian Community plugins, but reviews can take some time. In the meantime, you can install it using one of the methods below.
 
-1. Open Settings > Community plugins
-2. Search for "Mermaid View"
-3. Click Install, then Enable
+### Using BRAT
 
-### Manual Installation
+[BRAT](https://github.com/TfTHacker/obsidian42-brat) (Beta Reviewers Auto-update Tester) is a plugin that allows you to install plugins not yet included in the official Obsidian community repository. It's commonly used for pre-release versions or testing.
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
-2. Create a folder `.obsidian/plugins/mermaid-view/` in your vault
-3. Copy the downloaded files into the folder
-4. Enable the plugin in Settings > Community plugins
+1. Install BRAT from the [Obsidian Community plugins](https://obsidian.md/plugins?id=obsidian42-brat) or from [GitHub](https://github.com/TfTHacker/obsidian42-brat)
+2. Open BRAT plugin settings
+3. Click "Add Beta plugin"
+4. Enter `https://github.com/weppos/obsidian-mermaid-view/`
+5. Select "Latest version"
+6. Click "Add Plugin"
+
+### From Release
+
+1. Go to the [Releases page](https://github.com/weppos/obsidian-mermaid-view/releases)
+2. Download `mermaid-view.zip` from the desired version
+3. Unpack the archive
+4. Copy the `mermaid-view` folder into your vault's `.obsidian/plugins/` folder (resulting in `.obsidian/plugins/mermaid-view/`)
+5. Enable the plugin in Settings > Community plugins
 
 ## Changelog
 
