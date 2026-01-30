@@ -36,7 +36,7 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("File extensions")
 			.setDesc(
-				"Comma-separated list of file extensions (without the dot) to treat as Mermaid files. (Requires restarting Obsidian to take effect)"
+				"Comma-separated list of file extensions (without the dot) to treat as Mermaid files. (requires restarting Obsidian to take effect)"
 			)
 			.addText((text) =>
 				text
