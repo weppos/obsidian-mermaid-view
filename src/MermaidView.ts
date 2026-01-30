@@ -517,10 +517,33 @@ export class MermaidView extends TextFileView {
 			item.setTitle("Export as PNG")
 				.setIcon("image")
 				.onClick(() => {
-					void exportAsPng(svg, { filename });
+					const { pngBackground } = this.plugin.settings;
+					const backgroundColor = this.resolveBackgroundColor(pngBackground);
+					void exportAsPng(svg, {
+						filename,
+						backgroundColor,
+					});
 				});
 		});
 
 		menu.showAtMouseEvent(event);
+	}
+
+	private resolveBackgroundColor(setting: string): string {
+		const style = getComputedStyle(document.body);
+
+		switch (setting) {
+			case "theme":
+				// Use the current theme's background
+				return style.getPropertyValue("--background-primary").trim() || "#ffffff";
+			case "light":
+				// Use the light theme background color
+				return style.getPropertyValue("--color-base-00").trim() || "#ffffff";
+			case "dark":
+				// Use the dark theme background color
+				return style.getPropertyValue("--color-base-100").trim() || "#1e1e1e";
+			default:
+				return setting;
+		}
 	}
 }
