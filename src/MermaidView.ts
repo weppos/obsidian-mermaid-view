@@ -9,6 +9,7 @@ import { EditorView, lineNumbers, highlightActiveLine, drawSelection, keymap } f
 import { EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import type MermaidViewPlugin from "./main";
+import { exportAsSvg } from "./export";
 
 export const VIEW_TYPE_MERMAID = "mermaid-view";
 
@@ -141,8 +142,8 @@ export class MermaidView extends TextFileView {
 		});
 
 		// Add export button
-		this.addAction("download", "Export as SVG", () => {
-			this.exportAsSvg();
+		this.addAction("download", "Export diagram", () => {
+			this.handleExport();
 		});
 
 		// Create zoom controls panel on the right side
@@ -493,51 +494,14 @@ export class MermaidView extends TextFileView {
 		return this.zoomWrapper.querySelector(".mermaid svg");
 	}
 
-	private exportAsSvg(): void {
+	private handleExport(): void {
 		const svg = this.getSvgElement();
 		if (!svg) {
 			new Notice("No diagram to export. Render a diagram first.");
 			return;
 		}
 
-		// Clone the SVG to avoid modifying the displayed diagram
-		const clone = svg.cloneNode(true) as SVGSVGElement;
-
-		// Ensure the SVG has proper XML namespace
-		clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-
-		// Get dimensions from the original SVG
-		const bbox = svg.getBBox();
-		const width = svg.getAttribute("width") || bbox.width.toString();
-		const height = svg.getAttribute("height") || bbox.height.toString();
-
-		// Set viewBox if not present for proper scaling
-		if (!clone.getAttribute("viewBox")) {
-			clone.setAttribute("viewBox", `0 0 ${bbox.width} ${bbox.height}`);
-		}
-		clone.setAttribute("width", width);
-		clone.setAttribute("height", height);
-
-		// Serialize to string
-		const serializer = new XMLSerializer();
-		const svgString = serializer.serializeToString(clone);
-
-		// Create blob and download
-		const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-		const filename = `${this.file?.basename ?? "diagram"}.svg`;
-
-		this.downloadBlob(blob, filename);
-		new Notice(`Exported ${filename}`);
-	}
-
-	private downloadBlob(blob: Blob, filename: string): void {
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement("a");
-		link.href = url;
-		link.download = filename;
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		URL.revokeObjectURL(url);
+		const filename = this.file?.basename ?? "diagram";
+		exportAsSvg(svg, { filename });
 	}
 }

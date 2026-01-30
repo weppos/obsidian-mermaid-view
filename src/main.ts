@@ -1,13 +1,15 @@
-import { Component, MarkdownRenderer, Menu, Plugin, TAbstractFile, TFile, TFolder } from "obsidian";
+import { Menu, Plugin, TAbstractFile, TFolder } from "obsidian";
 import { MermaidView, VIEW_TYPE_MERMAID } from "./MermaidView";
 import {
 	MermaidViewSettings,
 	DEFAULT_SETTINGS,
 	MermaidViewSettingTab,
 } from "./settings";
+import { EmbedHandler } from "./embed";
 
 export default class MermaidViewPlugin extends Plugin {
 	settings: MermaidViewSettings;
+	private embedHandler: EmbedHandler;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -65,92 +67,9 @@ export default class MermaidViewPlugin extends Plugin {
 		);
 
 		// Watch for mermaid file embeds being added to the DOM
-		this.setupEmbedObserver();
-	}
-
-	private setupEmbedObserver(): void {
-		const observer = new MutationObserver((mutations) => {
-			for (const mutation of mutations) {
-				for (const node of Array.from(mutation.addedNodes)) {
-					if (node instanceof HTMLElement) {
-						this.processEmbedElement(node);
-						// Also check children
-						const embeds = node.querySelectorAll<HTMLElement>(".internal-embed.file-embed");
-						embeds.forEach((embed) => this.processEmbedElement(embed));
-					}
-				}
-			}
-		});
-
-		// Observe the entire document for embed elements
-		observer.observe(document.body, {
-			childList: true,
-			subtree: true,
-		});
-
-		// Store observer for cleanup
-		this.register(() => observer.disconnect());
-
-		// Process any existing embeds
-		document.querySelectorAll<HTMLElement>(".internal-embed.file-embed").forEach((embed) => {
-			this.processEmbedElement(embed);
-		});
-	}
-
-	private processEmbedElement(el: HTMLElement): void {
-		// Check if this is an internal-embed with file-embed class
-		if (!el.classList.contains("internal-embed") || !el.classList.contains("file-embed")) {
-			return;
-		}
-
-		// Skip if already processed
-		if (el.classList.contains("mermaid-embed")) return;
-
-		const src = el.getAttribute("src");
-		if (!src) return;
-
-		// Check if this is a mermaid file
-		const extension = src.split(".").pop()?.toLowerCase();
-		if (!extension || !this.settings.extensions.includes(extension)) return;
-
-		// Render the mermaid embed
-		void this.renderMermaidEmbed(el, src);
-	}
-
-	private async renderMermaidEmbed(container: HTMLElement, src: string): Promise<void> {
-		// Find the file - try multiple resolution methods
-		let linkedFile: TFile | null = this.app.metadataCache.getFirstLinkpathDest(src, "");
-
-		if (!linkedFile) {
-			// Try finding by path directly
-			const abstractFile = this.app.vault.getAbstractFileByPath(src);
-			if (abstractFile instanceof TFile) {
-				linkedFile = abstractFile;
-			}
-		}
-
-		if (!linkedFile) return;
-
-		// Read the mermaid file content
-		const content = await this.app.vault.read(linkedFile);
-
-		// Mark as processed and update classes
-		container.empty();
-		container.addClass("mermaid-embed");
-		container.removeClass("file-embed", "mod-generic");
-
-		const mermaidMarkdown = "```mermaid\n" + content.trim() + "\n```";
-
-		const embedComponent = new Component();
-		this.addChild(embedComponent);
-
-		await MarkdownRenderer.render(
-			this.app,
-			mermaidMarkdown,
-			container,
-			linkedFile.path,
-			embedComponent
-		);
+		this.embedHandler = new EmbedHandler(this.app, this.settings.extensions);
+		const stopEmbedObserver = this.embedHandler.start((component) => this.addChild(component));
+		this.register(stopEmbedObserver);
 	}
 
 	async createMermaidFile(folder: TFolder): Promise<void> {
