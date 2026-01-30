@@ -35,6 +35,9 @@ export class MermaidView extends TextFileView {
 	private initialPinchDistance = 0;
 	private initialPinchScale = 1;
 
+	// Zoom indicator
+	private zoomIndicator: HTMLElement;
+
 	// Debounce timer for live preview
 	private renderDebounceTimer: number | null = null;
 	private readonly RENDER_DEBOUNCE_MS = 300;
@@ -67,6 +70,12 @@ export class MermaidView extends TextFileView {
 
 		// Create zoom wrapper inside preview
 		this.zoomWrapper = this.previewEl.createDiv({ cls: "mermaid-zoom-wrapper" });
+
+		// Create zoom indicator
+		this.zoomIndicator = this.previewEl.createDiv({
+			cls: "mermaid-zoom-indicator",
+			text: "100%",
+		});
 
 		// Set up pan/zoom event handlers
 		this.setupPanZoom();
@@ -130,10 +139,8 @@ export class MermaidView extends TextFileView {
 			this.toggleMode();
 		});
 
-		// Add reset zoom button
-		this.addAction("maximize", "Reset zoom", () => {
-			this.resetZoom();
-		});
+		// Create zoom controls panel on the right side
+		this.createZoomControls();
 
 		// Set initial mode
 		this.setMode("preview");
@@ -397,12 +404,80 @@ export class MermaidView extends TextFileView {
 
 	private applyTransform(): void {
 		this.zoomWrapper.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+		this.updateZoomIndicator();
+	}
+
+	private updateZoomIndicator(): void {
+		const percentage = Math.round(this.scale * 100);
+		this.zoomIndicator.textContent = `${percentage}%`;
+
+		// Show/hide based on whether zoom is at default
+		if (this.scale === 1 && this.translateX === 0 && this.translateY === 0) {
+			this.zoomIndicator.removeClass("mermaid-zoom-indicator-active");
+		} else {
+			this.zoomIndicator.addClass("mermaid-zoom-indicator-active");
+		}
+	}
+
+	private createZoomControls(): void {
+		const controls = this.previewEl.createDiv({ cls: "mermaid-zoom-controls" });
+
+		// Zoom control group
+		const zoomGroup = controls.createDiv({ cls: "mermaid-zoom-control-group" });
+
+		const zoomInBtn = zoomGroup.createDiv({
+			cls: "mermaid-zoom-control-item",
+			attr: { "aria-label": "Zoom in" },
+		});
+		setIcon(zoomInBtn, "plus");
+		zoomInBtn.addEventListener("click", () => this.zoomIn());
+
+		const resetBtn = zoomGroup.createDiv({
+			cls: "mermaid-zoom-control-item",
+			attr: { "aria-label": "Reset zoom" },
+		});
+		setIcon(resetBtn, "rotate-cw");
+		resetBtn.addEventListener("click", () => this.resetZoom());
+
+		const zoomOutBtn = zoomGroup.createDiv({
+			cls: "mermaid-zoom-control-item",
+			attr: { "aria-label": "Zoom out" },
+		});
+		setIcon(zoomOutBtn, "minus");
+		zoomOutBtn.addEventListener("click", () => this.zoomOut());
 	}
 
 	private resetZoom(): void {
 		this.scale = 1;
 		this.translateX = 0;
 		this.translateY = 0;
+		this.applyTransform();
+	}
+
+	private zoomIn(): void {
+		this.zoomToCenter(1.2);
+	}
+
+	private zoomOut(): void {
+		this.zoomToCenter(0.8);
+	}
+
+	private zoomToCenter(factor: number): void {
+		const newScale = Math.min(
+			this.MAX_SCALE,
+			Math.max(this.MIN_SCALE, this.scale * factor)
+		);
+
+		// Zoom toward center of preview area
+		const rect = this.previewEl.getBoundingClientRect();
+		const centerX = rect.width / 2;
+		const centerY = rect.height / 2;
+
+		const scaleChange = newScale / this.scale;
+		this.translateX = centerX - scaleChange * (centerX - this.translateX);
+		this.translateY = centerY - scaleChange * (centerY - this.translateY);
+		this.scale = newScale;
+
 		this.applyTransform();
 	}
 }

@@ -49,6 +49,7 @@
 	justify-content: center;
 	box-sizing: border-box;
 	cursor: grab;
+	position: relative;
 }
 
 .mermaid-view-preview.mermaid-view-panning {
@@ -64,6 +65,74 @@
 .mermaid-zoom-wrapper {
 	transform-origin: 0 0;
 	will-change: transform;
+}
+
+/* Zoom controls panel - matches Canvas styling */
+.mermaid-zoom-controls {
+	position: absolute;
+	inset-inline-end: var(--size-4-2);
+	top: var(--size-4-2);
+	display: flex;
+	flex-direction: column;
+	z-index: 10;
+}
+
+.mermaid-zoom-control-group {
+	border-radius: var(--radius-s);
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	overflow: hidden;
+}
+
+.mermaid-zoom-control-item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--size-4-2);
+	border-radius: 0;
+	box-shadow: none;
+	cursor: pointer;
+	border-bottom: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	--icon-size: var(--icon-s);
+	--icon-stroke: var(--icon-s-stroke-width);
+}
+
+.mermaid-zoom-control-item:last-child {
+	border-bottom: none;
+}
+
+.mermaid-zoom-control-item:hover {
+	color: var(--text-normal);
+	background-color: var(--interactive-hover);
+}
+
+.mermaid-zoom-control-item svg {
+	width: var(--icon-size);
+	height: var(--icon-size);
+	stroke-width: var(--icon-stroke);
+}
+
+/* Zoom indicator */
+.mermaid-zoom-indicator {
+	position: absolute;
+	bottom: 12px;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 4px 8px;
+	background-color: var(--background-secondary);
+	border-radius: var(--radius-s);
+	font-size: var(--font-smaller);
+	font-family: var(--font-monospace);
+	color: var(--text-muted);
+	opacity: 0;
+	transition: opacity 150ms ease-in-out;
+	pointer-events: none;
+	z-index: 10;
+}
+
+.mermaid-zoom-indicator.mermaid-zoom-indicator-active {
+	opacity: 1;
 }
 
 .mermaid-view-preview .mermaid {
