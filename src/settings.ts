@@ -36,7 +36,7 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("File extensions")
 			.setDesc(
-				"Comma-separated list of file extensions to treat as Mermaid files (without the dot). Changes require restarting Obsidian."
+				"Comma-separated list of file extensions (without the dot) to treat as Mermaid files. (Requires restarting Obsidian to take effect)"
 			)
 			.addText((text) =>
 				text
@@ -46,11 +46,6 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
-
-		containerEl.createEl("p", {
-			text: "Restart Obsidian after changing extensions for the changes to take effect.",
-			cls: "setting-item-description",
-		});
 
 		new Setting(containerEl)
 			.setName("Split view layout")
