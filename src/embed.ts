@@ -42,7 +42,6 @@ export class EmbedHandler {
 			this.processElement(embed, addChild);
 		});
 
-		// Return cleanup function
 		return () => this.stop();
 	}
 
@@ -82,7 +81,6 @@ export class EmbedHandler {
 		const extension = src.split(".").pop()?.toLowerCase();
 		if (!extension || !this.extensions.includes(extension)) return;
 
-		// Render the mermaid embed
 		void this.renderEmbed(el, src, addChild);
 	}
 
@@ -107,7 +105,6 @@ export class EmbedHandler {
 
 		if (!linkedFile) return;
 
-		// Read the mermaid file content
 		const content = await this.app.vault.read(linkedFile);
 
 		// Mark as processed and update classes
