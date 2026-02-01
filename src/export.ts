@@ -122,8 +122,9 @@ export async function exportAsPng(svg: SVGSVGElement, options: ExportOptions): P
 
 	const svgString = serializeSvg(clone);
 
-	// Use data URL instead of blob URL to avoid "tainted canvas" security error
-	const base64 = btoa(unescape(encodeURIComponent(svgString)));
+	// Use data URL to avoid "tainted canvas" security error
+	const bytes = new TextEncoder().encode(svgString);
+	const base64 = btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
 	const dataUrl = `data:image/svg+xml;base64,${base64}`;
 
 	const img = await loadImage(dataUrl);

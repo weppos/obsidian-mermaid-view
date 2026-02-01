@@ -67,7 +67,7 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl("h3", { text: "Export" });
+		new Setting(containerEl).setName("Export").setHeading();
 
 		new Setting(containerEl)
 			.setName("PNG background")
