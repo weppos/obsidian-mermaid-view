@@ -3,11 +3,14 @@ import {
 	WorkspaceLeaf,
 	MarkdownRenderer,
 	setIcon,
+	Notice,
+	Menu,
 } from "obsidian";
 import { EditorView, lineNumbers, highlightActiveLine, drawSelection, keymap } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import type MermaidViewPlugin from "./main";
+import { exportAsSvg, exportAsPng } from "./export";
 
 export const VIEW_TYPE_MERMAID = "mermaid-view";
 
@@ -137,6 +140,11 @@ export class MermaidView extends TextFileView {
 		// Add view action button for toggling mode
 		this.addAction("code", "Toggle source/preview", () => {
 			this.toggleMode();
+		});
+
+		// Add export button
+		this.addAction("download", "Export diagram", (event) => {
+			this.showExportMenu(event);
 		});
 
 		// Create zoom controls panel on the right side
@@ -479,5 +487,64 @@ export class MermaidView extends TextFileView {
 		this.scale = newScale;
 
 		this.applyTransform();
+	}
+
+	// ========== Export Methods ==========
+
+	private getSvgElement(): SVGSVGElement | null {
+		return this.zoomWrapper.querySelector(".mermaid svg");
+	}
+
+	private showExportMenu(event: MouseEvent): void {
+		const svg = this.getSvgElement();
+		if (!svg) {
+			new Notice("No diagram to export. Render a diagram first.");
+			return;
+		}
+
+		const menu = new Menu();
+		const filename = this.file?.basename ?? "diagram";
+
+		menu.addItem((item) => {
+			item.setTitle("Export as SVG")
+				.setIcon("file-code")
+				.onClick(() => {
+					exportAsSvg(svg, { filename });
+				});
+		});
+
+		menu.addItem((item) => {
+			item.setTitle("Export as PNG")
+				.setIcon("image")
+				.onClick(() => {
+					const { pngBackground, pngScale } = this.plugin.settings;
+					const backgroundColor = this.resolveBackgroundColor(pngBackground);
+					void exportAsPng(svg, {
+						filename,
+						backgroundColor,
+						scale: pngScale,
+					});
+				});
+		});
+
+		menu.showAtMouseEvent(event);
+	}
+
+	private resolveBackgroundColor(setting: string): string {
+		const style = getComputedStyle(document.body);
+
+		switch (setting) {
+			case "theme":
+				// Use the current theme's background
+				return style.getPropertyValue("--background-primary").trim() || "#ffffff";
+			case "light":
+				// Use the light theme background color
+				return style.getPropertyValue("--color-base-00").trim() || "#ffffff";
+			case "dark":
+				// Use the dark theme background color
+				return style.getPropertyValue("--color-base-100").trim() || "#1e1e1e";
+			default:
+				return setting;
+		}
 	}
 }

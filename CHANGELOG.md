@@ -6,6 +6,7 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ### Added
 
+- Add export capability to save diagrams as SVG or PNG files (#17).
 - Add zoom indicator showing current zoom percentage when zoomed or panned.
 - Add zoom in/out buttons to the view action bar for precise zoom control.
 
