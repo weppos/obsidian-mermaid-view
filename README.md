@@ -13,6 +13,7 @@ Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can u
   - **Source**: Full-screen code editor
 - **Pan and zoom** - Navigate large diagrams with mouse wheel zoom and click-drag panning. Double-click to reset.
 - **CodeMirror editor** - Full-featured editor with line numbers, syntax highlighting, undo/redo, and standard keyboard shortcuts.
+- **Export diagrams** - Save diagrams as SVG or PNG files for use in other applications.
 - **Embed in notes** - Include mermaid diagrams in other notes using standard embed syntax:
   ```
   ![[diagram.mermaid]]

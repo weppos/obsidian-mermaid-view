@@ -509,7 +509,7 @@ export class MermaidView extends TextFileView {
 			item.setTitle("Export as SVG")
 				.setIcon("file-code")
 				.onClick(() => {
-					exportAsSvg(svg, { filename });
+					void exportAsSvg(svg, { filename });
 				});
 		});
 

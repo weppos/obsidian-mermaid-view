@@ -1,4 +1,4 @@
-import { Notice } from "obsidian";
+import { Notice, Platform } from "obsidian";
 
 export type ExportFormat = "svg" | "png";
 
@@ -42,8 +42,19 @@ function serializeSvg(svg: SVGSVGElement): string {
 
 /**
  * Downloads a blob as a file.
+ * On mobile, uses the Web Share API to trigger the native share sheet.
+ * On desktop, uses a traditional download link.
  */
-export function downloadBlob(blob: Blob, filename: string): void {
+export async function downloadBlob(blob: Blob, filename: string): Promise<void> {
+	if (Platform.isMobileApp && navigator.share && navigator.canShare) {
+		const file = new File([blob], filename, { type: blob.type });
+		if (navigator.canShare({ files: [file] })) {
+			await navigator.share({ files: [file] });
+			return;
+		}
+	}
+
+	// Desktop fallback
 	const url = URL.createObjectURL(blob);
 	const link = document.createElement("a");
 	link.href = url;
@@ -57,7 +68,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
 /**
  * Exports an SVG element as an SVG file.
  */
-export function exportAsSvg(svg: SVGSVGElement, options: ExportOptions): void {
+export async function exportAsSvg(svg: SVGSVGElement, options: ExportOptions): Promise<void> {
 	const clone = prepareSvgForExport(svg);
 	const svgString = serializeSvg(clone);
 
@@ -66,7 +77,7 @@ export function exportAsSvg(svg: SVGSVGElement, options: ExportOptions): void {
 		? options.filename
 		: `${options.filename}.svg`;
 
-	downloadBlob(blob, filename);
+	await downloadBlob(blob, filename);
 	new Notice(`Exported ${filename}`);
 }
 
@@ -155,7 +166,7 @@ export async function exportAsPng(svg: SVGSVGElement, options: ExportOptions): P
 		? options.filename
 		: `${options.filename}.png`;
 
-	downloadBlob(blob, filename);
+	await downloadBlob(blob, filename);
 	new Notice(`Exported ${filename}`);
 }
 
