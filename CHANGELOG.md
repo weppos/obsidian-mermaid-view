@@ -4,6 +4,8 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ## Unreleased
 
+## 0.4.0 - 2026-02-02
+
 ### Added
 
 - Add export capability to save diagrams as SVG or PNG files (#17).
