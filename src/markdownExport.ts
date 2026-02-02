@@ -97,6 +97,14 @@ function showExportMenu(
 }
 
 /**
+ * Checks if an element is inside the standalone MermaidView.
+ * We don't want to add export buttons there since it has its own export menu.
+ */
+function isInsideMermaidView(el: Element): boolean {
+	return el.closest(".mermaid-view-container") !== null;
+}
+
+/**
  * Adds export functionality to a mermaid container element.
  */
 function addExportToMermaid(
@@ -107,6 +115,11 @@ function addExportToMermaid(
 ): void {
 	// Check if we've already processed this element
 	if (mermaidEl.classList.contains("mermaid-export-processed")) {
+		return;
+	}
+
+	// Skip elements inside the standalone MermaidView (it has its own export)
+	if (isInsideMermaidView(mermaidEl)) {
 		return;
 	}
 
@@ -215,6 +228,11 @@ export function createLivePreviewExportObserver(
 	let diagramCounter = 0;
 
 	const processElement = (el: Element): void => {
+		// Skip elements inside the standalone MermaidView (it has its own export)
+		if (isInsideMermaidView(el)) {
+			return;
+		}
+
 		// Look for mermaid containers in Live Preview
 		// Structure: .cm-preview-code-block.cm-embed-block.cm-lang-mermaid > .mermaid > svg
 		if (el.matches?.(".cm-preview-code-block.cm-lang-mermaid")) {
@@ -258,11 +276,13 @@ export function createLivePreviewExportObserver(
 		subtree: true,
 	});
 
-	// Process any existing mermaid diagrams
+	// Process any existing mermaid diagrams (excluding those in standalone MermaidView)
 	document.querySelectorAll(".cm-preview-code-block.cm-lang-mermaid").forEach(processElement);
 	document.querySelectorAll(".mermaid:not(.mermaid-export-processed)").forEach((el) => {
-		const sourcePath = app.workspace.getActiveFile()?.path ?? "";
-		processMermaidElement(el, sourcePath, diagramCounter++, settings);
+		if (!isInsideMermaidView(el)) {
+			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
+			processMermaidElement(el, sourcePath, diagramCounter++, settings);
+		}
 	});
 
 	// Return cleanup function
