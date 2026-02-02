@@ -195,3 +195,43 @@
 	max-width: 100%;
 	height: auto;
 }
+
+/* Export button for mermaid diagrams in markdown */
+.mermaid-export-wrapper {
+	position: relative;
+	display: inline-block;
+}
+
+.mermaid-export-button {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 150ms ease-in-out;
+	z-index: 10;
+	color: var(--text-muted);
+}
+
+.mermaid-export-wrapper:hover .mermaid-export-button {
+	opacity: 1;
+}
+
+.mermaid-export-button:hover {
+	background-color: var(--interactive-hover);
+	color: var(--text-normal);
+}
+
+.mermaid-export-button svg {
+	width: 16px;
+	height: 16px;
+}

@@ -6,6 +6,7 @@ import {
 	MermaidViewSettingTab,
 } from "./settings";
 import { EmbedHandler } from "./embed";
+import { registerMermaidExportPostProcessor, createLivePreviewExportObserver } from "./markdownExport";
 
 export default class MermaidViewPlugin extends Plugin {
 	settings: MermaidViewSettings;
@@ -70,6 +71,17 @@ export default class MermaidViewPlugin extends Plugin {
 		this.embedHandler = new EmbedHandler(this.app, this.settings.extensions);
 		const stopEmbedObserver = this.embedHandler.start((component) => this.addChild(component));
 		this.register(stopEmbedObserver);
+
+		// Register post-processor for export buttons on mermaid diagrams in markdown (Reading View)
+		registerMermaidExportPostProcessor(
+			this.app,
+			this.settings,
+			(processor) => this.registerMarkdownPostProcessor(processor)
+		);
+
+		// Register observer for export buttons on mermaid diagrams in Live Preview
+		const stopLivePreviewObserver = createLivePreviewExportObserver(this.app, this.settings);
+		this.register(stopLivePreviewObserver);
 	}
 
 	async createMermaidFile(folder: TFolder): Promise<void> {
