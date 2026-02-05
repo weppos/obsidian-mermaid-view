@@ -242,7 +242,8 @@
 	z-index: 10;
 }
 
-.mermaid-diagram-wrapper:hover .mermaid-toolbar {
+.mermaid-diagram-wrapper:hover .mermaid-toolbar,
+.mermaid-diagram-wrapper.is-mobile .mermaid-toolbar {
 	opacity: 1;
 }
 

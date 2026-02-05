@@ -1,4 +1,4 @@
-import { App, MarkdownPostProcessorContext, Menu, setIcon } from "obsidian";
+import { App, MarkdownPostProcessorContext, Menu, Platform, setIcon } from "obsidian";
 import { exportAsSvg, exportAsPng } from "./export";
 import { PanZoomHandler } from "./panZoom";
 import type { MermaidViewSettings, PngBackground } from "./settings";
@@ -174,6 +174,9 @@ function addToolbarToMermaid(
 	// Create main wrapper for the diagram
 	const wrapper = document.createElement("div");
 	wrapper.className = "mermaid-diagram-wrapper";
+	if (Platform.isMobile) {
+		wrapper.classList.add("is-mobile");
+	}
 
 	// Create zoom container (provides overflow: hidden)
 	const zoomContainer = document.createElement("div");
