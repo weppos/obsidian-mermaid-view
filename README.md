@@ -20,6 +20,16 @@ Mermaid View is a type of [view](https://help.obsidian.md/bases/views) you can u
   ```
 - **Menu integration** - Right-click in the file explorer to create a new Mermaid file, or use the command palette.
 
+### Feature Comparison
+
+Mermaid diagrams can be rendered in three ways within Obsidian. This plugin enhances all of them:
+
+| Rendering method | Export PNG/SVG | Pan/Zoom |
+|------------------|:--------------:|:--------:|
+| ` ```mermaid` ` code block | ✅ | ✅ |
+| `![[file.mermaid]]` embed | ✅ | ✅ |
+| Standalone `.mermaid` file | ✅ | ✅ |
+
 ### Preview Mode
 
 View your diagrams full-screen with pan and zoom support.

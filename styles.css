@@ -196,42 +196,80 @@
 	height: auto;
 }
 
-/* Export button for mermaid diagrams in markdown */
-.mermaid-export-wrapper {
+/* Embedded mermaid diagram wrapper with toolbar */
+.mermaid-diagram-wrapper {
 	position: relative;
-	display: inline-block;
+	width: 100%;
 }
 
-.mermaid-export-button {
+/* Zoom container for embedded diagrams */
+.mermaid-zoom-container {
+	overflow: hidden;
+	width: 100%;
+	cursor: grab;
+	touch-action: none;
+}
+
+.mermaid-zoom-container.mermaid-view-panning {
+	cursor: grabbing;
+}
+
+/* Zoom wrapper for embedded diagrams (receives transforms) */
+.mermaid-embedded-zoom-wrapper {
+	transform-origin: 0 0;
+	will-change: transform;
+}
+
+/* Ensure mermaid SVG isn't constrained when zooming */
+.mermaid-embedded-zoom-wrapper .mermaid svg {
+	max-width: none;
+}
+
+/* Toolbar for embedded diagrams */
+.mermaid-toolbar {
 	position: absolute;
 	top: 8px;
-	right: 8px;
+	right: 40px;
+	display: flex;
+	flex-direction: row;
+	gap: 0;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	overflow: hidden;
+	opacity: 0;
+	transition: opacity 150ms ease-in-out;
+	z-index: 10;
+}
+
+.mermaid-diagram-wrapper:hover .mermaid-toolbar {
+	opacity: 1;
+}
+
+.mermaid-toolbar-button {
 	width: 28px;
 	height: 28px;
 	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-s);
+	background-color: transparent;
+	border: none;
+	border-right: 1px solid var(--background-modifier-border);
 	cursor: pointer;
-	opacity: 0;
-	transition: opacity 150ms ease-in-out;
-	z-index: 10;
 	color: var(--text-muted);
 }
 
-.mermaid-export-wrapper:hover .mermaid-export-button {
-	opacity: 1;
+.mermaid-toolbar-button:last-child {
+	border-right: none;
 }
 
-.mermaid-export-button:hover {
+.mermaid-toolbar-button:hover {
 	background-color: var(--interactive-hover);
 	color: var(--text-normal);
 }
 
-.mermaid-export-button svg {
+.mermaid-toolbar-button svg {
 	width: 16px;
 	height: 16px;
 }

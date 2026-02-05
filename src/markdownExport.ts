@@ -1,5 +1,6 @@
 import { App, MarkdownPostProcessorContext, Menu, setIcon } from "obsidian";
 import { exportAsSvg, exportAsPng } from "./export";
+import { PanZoomHandler } from "./panZoom";
 import type { MermaidViewSettings, PngBackground } from "./settings";
 
 /**
@@ -38,27 +39,66 @@ function generateFilename(sourcePath: string, index: number): string {
 }
 
 /**
- * Creates an export button element for a mermaid diagram.
+ * Creates the toolbar with zoom controls and export button.
  */
-function createExportButton(
+function createToolbar(
 	svg: SVGSVGElement,
 	filename: string,
-	settings: MermaidViewSettings
+	settings: MermaidViewSettings,
+	panZoomHandler: PanZoomHandler
 ): HTMLElement {
-	const button = document.createElement("button");
-	button.className = "mermaid-export-button";
-	button.setAttribute("aria-label", "Export diagram");
+	const toolbar = document.createElement("div");
+	toolbar.className = "mermaid-toolbar";
 
-	// Use Obsidian's setIcon for consistent icon rendering
-	setIcon(button, "download");
+	// Zoom in button
+	const zoomInBtn = document.createElement("button");
+	zoomInBtn.className = "mermaid-toolbar-button";
+	zoomInBtn.setAttribute("aria-label", "Zoom in");
+	setIcon(zoomInBtn, "plus");
+	zoomInBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		panZoomHandler.zoomIn();
+	});
+	toolbar.appendChild(zoomInBtn);
 
-	button.addEventListener("click", (event) => {
+	// Reset zoom button
+	const resetBtn = document.createElement("button");
+	resetBtn.className = "mermaid-toolbar-button";
+	resetBtn.setAttribute("aria-label", "Reset zoom");
+	setIcon(resetBtn, "rotate-cw");
+	resetBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		panZoomHandler.resetZoom();
+	});
+	toolbar.appendChild(resetBtn);
+
+	// Zoom out button
+	const zoomOutBtn = document.createElement("button");
+	zoomOutBtn.className = "mermaid-toolbar-button";
+	zoomOutBtn.setAttribute("aria-label", "Zoom out");
+	setIcon(zoomOutBtn, "minus");
+	zoomOutBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		panZoomHandler.zoomOut();
+	});
+	toolbar.appendChild(zoomOutBtn);
+
+	// Export button
+	const exportBtn = document.createElement("button");
+	exportBtn.className = "mermaid-toolbar-button";
+	exportBtn.setAttribute("aria-label", "Export diagram");
+	setIcon(exportBtn, "download");
+	exportBtn.addEventListener("click", (event) => {
 		event.preventDefault();
 		event.stopPropagation();
 		showExportMenu(event, svg, filename, settings);
 	});
+	toolbar.appendChild(exportBtn);
 
-	return button;
+	return toolbar;
 }
 
 /**
@@ -98,27 +138,27 @@ function showExportMenu(
 
 /**
  * Checks if an element is inside the standalone MermaidView.
- * We don't want to add export buttons there since it has its own export menu.
+ * We don't want to add toolbar/zoom there since it has its own controls.
  */
 function isInsideMermaidView(el: Element): boolean {
 	return el.closest(".mermaid-view-container") !== null;
 }
 
 /**
- * Adds export functionality to a mermaid container element.
+ * Adds pan/zoom and export functionality to a mermaid container element.
  */
-function addExportToMermaid(
+function addToolbarToMermaid(
 	mermaidEl: Element,
 	sourcePath: string,
 	index: number,
 	settings: MermaidViewSettings
 ): void {
 	// Check if we've already processed this element
-	if (mermaidEl.classList.contains("mermaid-export-processed")) {
+	if (mermaidEl.classList.contains("mermaid-toolbar-processed")) {
 		return;
 	}
 
-	// Skip elements inside the standalone MermaidView (it has its own export)
+	// Skip elements inside the standalone MermaidView (it has its own controls)
 	if (isInsideMermaidView(mermaidEl)) {
 		return;
 	}
@@ -129,23 +169,45 @@ function addExportToMermaid(
 	}
 
 	// Mark as processed
-	mermaidEl.classList.add("mermaid-export-processed");
+	mermaidEl.classList.add("mermaid-toolbar-processed");
 
-	// Create wrapper for positioning the export button
+	// Create main wrapper for the diagram
 	const wrapper = document.createElement("div");
-	wrapper.className = "mermaid-export-wrapper";
+	wrapper.className = "mermaid-diagram-wrapper";
 
-	// Move the mermaid content into the wrapper
+	// Create zoom container (provides overflow: hidden)
+	const zoomContainer = document.createElement("div");
+	zoomContainer.className = "mermaid-zoom-container";
+
+	// Create zoom wrapper (receives transforms)
+	const zoomWrapper = document.createElement("div");
+	zoomWrapper.className = "mermaid-embedded-zoom-wrapper";
+
+	// Move the mermaid content into the zoom wrapper
 	const parent = mermaidEl.parentElement;
 	if (!parent) return;
 
 	parent.insertBefore(wrapper, mermaidEl);
-	wrapper.appendChild(mermaidEl);
+	zoomWrapper.appendChild(mermaidEl);
+	zoomContainer.appendChild(zoomWrapper);
+	wrapper.appendChild(zoomContainer);
 
-	// Add export button
+	// Create pan/zoom handler (disable wheel zoom to avoid scroll interference)
+	const panZoomHandler = new PanZoomHandler(zoomContainer, zoomWrapper, {
+		enableWheelZoom: false,
+		enableDragPan: true,
+		enableTouchGestures: true,
+	});
+
+	// Fit content to container after a brief delay to ensure layout is complete
+	requestAnimationFrame(() => {
+		panZoomHandler.fitContent();
+	});
+
+	// Add toolbar with zoom controls and export button
 	const filename = generateFilename(sourcePath, index);
-	const button = createExportButton(svg, filename, settings);
-	wrapper.appendChild(button);
+	const toolbar = createToolbar(svg, filename, settings, panZoomHandler);
+	wrapper.appendChild(toolbar);
 }
 
 /**
@@ -184,7 +246,7 @@ function waitForSvg(mermaidEl: Element, timeout = 5000): Promise<SVGSVGElement |
 }
 
 /**
- * Processes a mermaid element to add export functionality.
+ * Processes a mermaid element to add toolbar functionality.
  */
 function processMermaidElement(
 	mermaidEl: Element,
@@ -194,13 +256,13 @@ function processMermaidElement(
 ): void {
 	void waitForSvg(mermaidEl).then((svg) => {
 		if (svg) {
-			addExportToMermaid(mermaidEl, sourcePath, index, settings);
+			addToolbarToMermaid(mermaidEl, sourcePath, index, settings);
 		}
 	});
 }
 
 /**
- * Registers the markdown post-processor for mermaid export functionality.
+ * Registers the markdown post-processor for mermaid toolbar functionality.
  * This handles Reading View.
  */
 export function registerMermaidExportPostProcessor(
@@ -228,7 +290,7 @@ export function createLivePreviewExportObserver(
 	let diagramCounter = 0;
 
 	const processElement = (el: Element): void => {
-		// Skip elements inside the standalone MermaidView (it has its own export)
+		// Skip elements inside the standalone MermaidView (it has its own controls)
 		if (isInsideMermaidView(el)) {
 			return;
 		}
@@ -237,7 +299,7 @@ export function createLivePreviewExportObserver(
 		// Structure: .cm-preview-code-block.cm-embed-block.cm-lang-mermaid > .mermaid > svg
 		if (el.matches?.(".cm-preview-code-block.cm-lang-mermaid")) {
 			const mermaidEl = el.querySelector(".mermaid");
-			if (mermaidEl && !mermaidEl.classList.contains("mermaid-export-processed")) {
+			if (mermaidEl && !mermaidEl.classList.contains("mermaid-toolbar-processed")) {
 				// Try to get source path from the active file
 				const sourcePath = app.workspace.getActiveFile()?.path ?? "";
 				processMermaidElement(mermaidEl, sourcePath, diagramCounter++, settings);
@@ -245,7 +307,7 @@ export function createLivePreviewExportObserver(
 		}
 
 		// Also check for .mermaid elements directly (Reading View structure)
-		if (el.matches?.(".mermaid") && !el.classList.contains("mermaid-export-processed")) {
+		if (el.matches?.(".mermaid") && !el.classList.contains("mermaid-toolbar-processed")) {
 			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
 			processMermaidElement(el, sourcePath, diagramCounter++, settings);
 		}
@@ -278,7 +340,7 @@ export function createLivePreviewExportObserver(
 
 	// Process any existing mermaid diagrams (excluding those in standalone MermaidView)
 	document.querySelectorAll(".cm-preview-code-block.cm-lang-mermaid").forEach(processElement);
-	document.querySelectorAll(".mermaid:not(.mermaid-export-processed)").forEach((el) => {
+	document.querySelectorAll(".mermaid:not(.mermaid-toolbar-processed)").forEach((el) => {
 		if (!isInsideMermaidView(el)) {
 			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
 			processMermaidElement(el, sourcePath, diagramCounter++, settings);

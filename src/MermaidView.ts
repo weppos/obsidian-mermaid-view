@@ -11,6 +11,7 @@ import { EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import type MermaidViewPlugin from "./main";
 import { exportAsSvg, exportAsPng } from "./export";
+import { PanZoomHandler } from "./panZoom";
 
 export const VIEW_TYPE_MERMAID = "mermaid-view";
 
@@ -23,22 +24,9 @@ export class MermaidView extends TextFileView {
 	private sourceEl: HTMLElement;
 	private editorView: EditorView;
 
-	// Pan/zoom state
+	// Pan/zoom handler
 	private zoomWrapper: HTMLElement;
-	private scale = 1;
-	private translateX = 0;
-	private translateY = 0;
-	private isPanning = false;
-	private startX = 0;
-	private startY = 0;
-	private readonly MIN_SCALE = 0.1;
-	private readonly MAX_SCALE = 5;
-
-	// Touch gesture state
-	private initialPinchDistance = 0;
-	private initialPinchScale = 1;
-
-	// Zoom indicator
+	private panZoomHandler: PanZoomHandler;
 	private zoomIndicator: HTMLElement;
 
 	// Debounce timer for live preview
@@ -80,8 +68,11 @@ export class MermaidView extends TextFileView {
 			text: "100%",
 		});
 
-		// Set up pan/zoom event handlers
-		this.setupPanZoom();
+		// Set up pan/zoom handler with full gesture support
+		this.panZoomHandler = new PanZoomHandler(this.previewEl, this.zoomWrapper);
+		this.panZoomHandler.setOnScaleChange((scale, translateX, translateY) => {
+			this.updateZoomIndicator(scale, translateX, translateY);
+		});
 
 		// Create source editor container
 		this.sourceEl = container.createDiv({ cls: "mermaid-view-source" });
@@ -155,6 +146,7 @@ export class MermaidView extends TextFileView {
 	}
 
 	async onClose(): Promise<void> {
+		this.panZoomHandler.destroy();
 		this.editorView.destroy();
 		this.contentEl.empty();
 		await super.onClose();
@@ -253,7 +245,7 @@ export class MermaidView extends TextFileView {
 	private async renderPreview(preserveZoom = false): Promise<void> {
 		this.zoomWrapper.empty();
 		if (!preserveZoom) {
-			this.resetZoom();
+			this.panZoomHandler.resetZoom();
 		}
 
 		const content = (this.data ?? "").trim();
@@ -289,138 +281,12 @@ export class MermaidView extends TextFileView {
 		}
 	}
 
-	private setupPanZoom(): void {
-		// Wheel event for zooming
-		this.registerDomEvent(this.previewEl, "wheel", (e: WheelEvent) => {
-			e.preventDefault();
-
-			const rect = this.previewEl.getBoundingClientRect();
-			const mouseX = e.clientX - rect.left;
-			const mouseY = e.clientY - rect.top;
-
-			// Calculate zoom
-			const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-			const newScale = Math.min(
-				this.MAX_SCALE,
-				Math.max(this.MIN_SCALE, this.scale * zoomFactor)
-			);
-
-			// Zoom toward mouse position
-			const scaleChange = newScale / this.scale;
-			this.translateX = mouseX - scaleChange * (mouseX - this.translateX);
-			this.translateY = mouseY - scaleChange * (mouseY - this.translateY);
-			this.scale = newScale;
-
-			this.applyTransform();
-		}, { passive: false });
-
-		// Mouse events for panning
-		this.registerDomEvent(this.previewEl, "mousedown", (e: MouseEvent) => {
-			if (e.button !== 0) return; // Only left click
-			this.isPanning = true;
-			this.startX = e.clientX - this.translateX;
-			this.startY = e.clientY - this.translateY;
-			this.previewEl.addClass("mermaid-view-panning");
-		});
-
-		this.registerDomEvent(this.previewEl, "mousemove", (e: MouseEvent) => {
-			if (!this.isPanning) return;
-			this.translateX = e.clientX - this.startX;
-			this.translateY = e.clientY - this.startY;
-			this.applyTransform();
-		});
-
-		this.registerDomEvent(this.previewEl, "mouseup", () => {
-			this.isPanning = false;
-			this.previewEl.removeClass("mermaid-view-panning");
-		});
-
-		this.registerDomEvent(this.previewEl, "mouseleave", () => {
-			this.isPanning = false;
-			this.previewEl.removeClass("mermaid-view-panning");
-		});
-
-		// Double-click to reset
-		this.registerDomEvent(this.previewEl, "dblclick", () => {
-			this.resetZoom();
-		});
-
-		// Touch events for mobile pan/zoom
-		this.registerDomEvent(this.previewEl, "touchstart", (e: TouchEvent) => {
-			const touch1 = e.touches[0];
-			const touch2 = e.touches[1];
-
-			if (e.touches.length === 2 && touch1 && touch2) {
-				// Pinch zoom start
-				this.initialPinchDistance = Math.hypot(
-					touch2.clientX - touch1.clientX,
-					touch2.clientY - touch1.clientY
-				);
-				this.initialPinchScale = this.scale;
-			} else if (e.touches.length === 1 && touch1) {
-				// Single touch pan
-				this.isPanning = true;
-				this.startX = touch1.clientX - this.translateX;
-				this.startY = touch1.clientY - this.translateY;
-				this.previewEl.addClass("mermaid-view-panning");
-			}
-		});
-
-		this.registerDomEvent(this.previewEl, "touchmove", (e: TouchEvent) => {
-			e.preventDefault();
-
-			const touch1 = e.touches[0];
-			const touch2 = e.touches[1];
-
-			if (e.touches.length === 2 && touch1 && touch2) {
-				// Pinch zoom
-				const currentDistance = Math.hypot(
-					touch2.clientX - touch1.clientX,
-					touch2.clientY - touch1.clientY
-				);
-
-				const scaleRatio = currentDistance / this.initialPinchDistance;
-				const newScale = Math.min(
-					this.MAX_SCALE,
-					Math.max(this.MIN_SCALE, this.initialPinchScale * scaleRatio)
-				);
-
-				// Zoom toward pinch center
-				const rect = this.previewEl.getBoundingClientRect();
-				const centerX = (touch1.clientX + touch2.clientX) / 2 - rect.left;
-				const centerY = (touch1.clientY + touch2.clientY) / 2 - rect.top;
-
-				const scaleChange = newScale / this.scale;
-				this.translateX = centerX - scaleChange * (centerX - this.translateX);
-				this.translateY = centerY - scaleChange * (centerY - this.translateY);
-				this.scale = newScale;
-
-				this.applyTransform();
-			} else if (e.touches.length === 1 && touch1 && this.isPanning) {
-				// Single touch pan
-				this.translateX = touch1.clientX - this.startX;
-				this.translateY = touch1.clientY - this.startY;
-				this.applyTransform();
-			}
-		}, { passive: false });
-
-		this.registerDomEvent(this.previewEl, "touchend", () => {
-			this.isPanning = false;
-			this.previewEl.removeClass("mermaid-view-panning");
-		});
-	}
-
-	private applyTransform(): void {
-		this.zoomWrapper.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
-		this.updateZoomIndicator();
-	}
-
-	private updateZoomIndicator(): void {
-		const percentage = Math.round(this.scale * 100);
+	private updateZoomIndicator(scale: number, translateX: number, translateY: number): void {
+		const percentage = Math.round(scale * 100);
 		this.zoomIndicator.textContent = `${percentage}%`;
 
 		// Show/hide based on whether zoom is at default
-		if (this.scale === 1 && this.translateX === 0 && this.translateY === 0) {
+		if (scale === 1 && translateX === 0 && translateY === 0) {
 			this.zoomIndicator.removeClass("mermaid-zoom-indicator-active");
 		} else {
 			this.zoomIndicator.addClass("mermaid-zoom-indicator-active");
@@ -438,55 +304,21 @@ export class MermaidView extends TextFileView {
 			attr: { "aria-label": "Zoom in" },
 		});
 		setIcon(zoomInBtn, "plus");
-		zoomInBtn.addEventListener("click", () => this.zoomIn());
+		zoomInBtn.addEventListener("click", () => this.panZoomHandler.zoomIn());
 
 		const resetBtn = zoomGroup.createDiv({
 			cls: "mermaid-zoom-control-item",
 			attr: { "aria-label": "Reset zoom" },
 		});
 		setIcon(resetBtn, "rotate-cw");
-		resetBtn.addEventListener("click", () => this.resetZoom());
+		resetBtn.addEventListener("click", () => this.panZoomHandler.resetZoom());
 
 		const zoomOutBtn = zoomGroup.createDiv({
 			cls: "mermaid-zoom-control-item",
 			attr: { "aria-label": "Zoom out" },
 		});
 		setIcon(zoomOutBtn, "minus");
-		zoomOutBtn.addEventListener("click", () => this.zoomOut());
-	}
-
-	private resetZoom(): void {
-		this.scale = 1;
-		this.translateX = 0;
-		this.translateY = 0;
-		this.applyTransform();
-	}
-
-	private zoomIn(): void {
-		this.zoomToCenter(1.2);
-	}
-
-	private zoomOut(): void {
-		this.zoomToCenter(0.8);
-	}
-
-	private zoomToCenter(factor: number): void {
-		const newScale = Math.min(
-			this.MAX_SCALE,
-			Math.max(this.MIN_SCALE, this.scale * factor)
-		);
-
-		// Zoom toward center of preview area
-		const rect = this.previewEl.getBoundingClientRect();
-		const centerX = rect.width / 2;
-		const centerY = rect.height / 2;
-
-		const scaleChange = newScale / this.scale;
-		this.translateX = centerX - scaleChange * (centerX - this.translateX);
-		this.translateY = centerY - scaleChange * (centerY - this.translateY);
-		this.scale = newScale;
-
-		this.applyTransform();
+		zoomOutBtn.addEventListener("click", () => this.panZoomHandler.zoomOut());
 	}
 
 	// ========== Export Methods ==========
