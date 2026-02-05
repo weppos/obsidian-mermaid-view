@@ -4,6 +4,10 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ## Unreleased
 
+### Added
+
+- Add export (SVG/PNG) and pan/zoom support to embedded Mermaid diagrams, both in markdown `` ```mermaid `` code blocks and `![[file]]` embeds (#18).
+
 ## 0.4.0 - 2026-02-02
 
 ### Added
