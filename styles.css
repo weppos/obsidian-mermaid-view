@@ -228,11 +228,10 @@
 /* Toolbar for embedded diagrams */
 .mermaid-toolbar {
 	position: absolute;
-	top: 8px;
-	right: 40px;
+	top: var(--size-4-2);
+	inset-inline-end: var(--size-4-2);
 	display: flex;
-	flex-direction: row;
-	gap: 0;
+	flex-direction: column;
 	background-color: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
@@ -248,21 +247,23 @@
 }
 
 .mermaid-toolbar-button {
-	width: 28px;
-	height: 28px;
-	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	padding: var(--size-4-2);
 	background-color: transparent;
 	border: none;
-	border-right: 1px solid var(--background-modifier-border);
+	border-bottom: 1px solid var(--background-modifier-border);
+	border-radius: 0;
+	box-shadow: none;
 	cursor: pointer;
 	color: var(--text-muted);
+	--icon-size: var(--icon-s);
+	--icon-stroke: var(--icon-s-stroke-width);
 }
 
 .mermaid-toolbar-button:last-child {
-	border-right: none;
+	border-bottom: none;
 }
 
 .mermaid-toolbar-button:hover {
@@ -271,6 +272,7 @@
 }
 
 .mermaid-toolbar-button svg {
-	width: 16px;
-	height: 16px;
+	width: var(--icon-size);
+	height: var(--icon-size);
+	stroke-width: var(--icon-stroke);
 }
