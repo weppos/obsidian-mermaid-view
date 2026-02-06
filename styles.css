@@ -228,7 +228,7 @@
 /* Toolbar for embedded diagrams */
 .mermaid-toolbar {
 	position: absolute;
-	top: var(--size-4-2);
+	top: calc(var(--size-4-2) + 28px);
 	inset-inline-end: var(--size-4-2);
 	display: flex;
 	flex-direction: column;

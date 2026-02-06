@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Fixed
+
+- Fix embedded diagram toolbar overlapping Obsidian's copy code button on mermaid code blocks.
+
 ## 0.5.0 - 2026-02-05
 
 ### Added
