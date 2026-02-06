@@ -133,12 +133,7 @@ export class MermaidView extends TextFileView {
 			this.toggleMode();
 		});
 
-		// Add export button
-		this.addAction("download", "Export diagram", (event) => {
-			this.showExportMenu(event);
-		});
-
-		// Create zoom controls panel on the right side
+		// Create zoom controls and export panel on the right side
 		this.createZoomControls();
 
 		// Set initial mode
@@ -319,6 +314,16 @@ export class MermaidView extends TextFileView {
 		});
 		setIcon(zoomOutBtn, "minus");
 		zoomOutBtn.addEventListener("click", () => this.panZoomHandler.zoomOut());
+
+		// Export control group
+		const exportGroup = controls.createDiv({ cls: "mermaid-zoom-control-group" });
+
+		const exportBtn = exportGroup.createDiv({
+			cls: "mermaid-zoom-control-item",
+			attr: { "aria-label": "Export diagram" },
+		});
+		setIcon(exportBtn, "download");
+		exportBtn.addEventListener("click", (event) => this.showExportMenu(event));
 	}
 
 	// ========== Export Methods ==========

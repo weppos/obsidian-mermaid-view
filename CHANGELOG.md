@@ -4,6 +4,10 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ## Unreleased
 
+### Changed
+
+- Unify toolbar layout across standalone view and embedded diagrams for a consistent experience: zoom and export controls are now grouped separately, matching the Obsidian Canvas toolbar style.
+
 ### Fixed
 
 - Fix embedded diagram toolbar overlapping Obsidian's copy code button on mermaid code blocks.
