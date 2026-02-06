@@ -50,7 +50,10 @@ function createToolbar(
 	const toolbar = document.createElement("div");
 	toolbar.className = "mermaid-toolbar";
 
-	// Zoom in button
+	// Zoom control group
+	const zoomGroup = document.createElement("div");
+	zoomGroup.className = "mermaid-toolbar-group";
+
 	const zoomInBtn = document.createElement("button");
 	zoomInBtn.className = "mermaid-toolbar-button";
 	zoomInBtn.setAttribute("aria-label", "Zoom in");
@@ -60,9 +63,8 @@ function createToolbar(
 		e.stopPropagation();
 		panZoomHandler.zoomIn();
 	});
-	toolbar.appendChild(zoomInBtn);
+	zoomGroup.appendChild(zoomInBtn);
 
-	// Reset zoom button
 	const resetBtn = document.createElement("button");
 	resetBtn.className = "mermaid-toolbar-button";
 	resetBtn.setAttribute("aria-label", "Reset zoom");
@@ -72,9 +74,8 @@ function createToolbar(
 		e.stopPropagation();
 		panZoomHandler.resetZoom();
 	});
-	toolbar.appendChild(resetBtn);
+	zoomGroup.appendChild(resetBtn);
 
-	// Zoom out button
 	const zoomOutBtn = document.createElement("button");
 	zoomOutBtn.className = "mermaid-toolbar-button";
 	zoomOutBtn.setAttribute("aria-label", "Zoom out");
@@ -84,9 +85,14 @@ function createToolbar(
 		e.stopPropagation();
 		panZoomHandler.zoomOut();
 	});
-	toolbar.appendChild(zoomOutBtn);
+	zoomGroup.appendChild(zoomOutBtn);
 
-	// Export button
+	toolbar.appendChild(zoomGroup);
+
+	// Export control group
+	const exportGroup = document.createElement("div");
+	exportGroup.className = "mermaid-toolbar-group";
+
 	const exportBtn = document.createElement("button");
 	exportBtn.className = "mermaid-toolbar-button";
 	exportBtn.setAttribute("aria-label", "Export diagram");
@@ -96,7 +102,9 @@ function createToolbar(
 		event.stopPropagation();
 		showExportMenu(event, svg, filename, settings);
 	});
-	toolbar.appendChild(exportBtn);
+	exportGroup.appendChild(exportBtn);
+
+	toolbar.appendChild(exportGroup);
 
 	return toolbar;
 }

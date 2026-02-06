@@ -232,10 +232,7 @@
 	inset-inline-end: var(--size-4-2);
 	display: flex;
 	flex-direction: column;
-	background-color: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-s);
-	overflow: hidden;
+	gap: var(--size-4-2);
 	opacity: 0;
 	transition: opacity 150ms ease-in-out;
 	z-index: 10;
@@ -244,6 +241,13 @@
 .mermaid-diagram-wrapper:hover .mermaid-toolbar,
 .mermaid-diagram-wrapper.is-mobile .mermaid-toolbar {
 	opacity: 1;
+}
+
+.mermaid-toolbar-group {
+	border-radius: var(--radius-s);
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	overflow: hidden;
 }
 
 .mermaid-toolbar-button {
