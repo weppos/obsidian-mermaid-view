@@ -3,6 +3,9 @@ import { exportAsSvg, exportAsPng } from "./export";
 import { PanZoomHandler } from "./panZoom";
 import type { MermaidViewSettings, PngBackground } from "./settings";
 
+const MERMAID_TOOLBAR_PROCESSED_CLASS = "mermaid-toolbar-processed";
+const processingMermaidElements = new WeakSet<Element>();
+
 /**
  * Resolves the background color setting to an actual color value.
  */
@@ -29,135 +32,182 @@ function generateFilename(sourcePath: string, index: number): string {
 		return index > 0 ? `diagram-${index + 1}` : "diagram";
 	}
 
-	// Extract basename without extension
 	const parts = sourcePath.split("/");
 	const filename = parts[parts.length - 1] || "diagram";
 	const basename = filename.replace(/\.[^.]+$/, "");
 
-	// Add index suffix if there might be multiple diagrams
 	return index > 0 ? `${basename}-${index + 1}` : basename;
 }
 
 /**
- * Creates the toolbar with zoom controls and export button.
+ * Extracts mermaid code blocks from markdown lines.
  */
-function createToolbar(
+function extractMermaidBlocks(lines: string[]): string[] {
+	const blocks: string[] = [];
+	let inMermaidBlock = false;
+	let currentBlock: string[] = [];
+
+	for (const line of lines) {
+		if (!inMermaidBlock) {
+			const fenceMatch = line.match(/^```([\w-]+)?\s*$/);
+			if (fenceMatch && fenceMatch[1]?.toLowerCase() === "mermaid") {
+				inMermaidBlock = true;
+				currentBlock = [];
+			}
+			continue;
+		}
+
+		if (/^```\s*$/.test(line)) {
+			blocks.push(currentBlock.join("\n").trim());
+			inMermaidBlock = false;
+			currentBlock = [];
+			continue;
+		}
+
+		currentBlock.push(line);
+	}
+
+	return blocks;
+}
+
+/**
+ * Extracts Mermaid source from a Live Preview code block container.
+ */
+function captureSourceFromLivePreviewBlock(cmBlock: Element): string {
+	const lines: string[] = [];
+	cmBlock.querySelectorAll(".cm-line").forEach((line) => {
+		lines.push(line.textContent ?? "");
+	});
+
+	if (lines.length === 0) {
+		return "";
+	}
+
+	const fencedBlocks = extractMermaidBlocks(lines);
+	if (fencedBlocks.length > 0) {
+		return fencedBlocks[0] ?? "";
+	}
+
+	return lines.join("\n").trim();
+}
+
+/**
+ * Extracts Mermaid source from Reading View code block containers.
+ */
+function captureSourceFromReadingBlock(mermaidEl: Element): string {
+	const readingBlock = mermaidEl.closest(".el-pre, .block-language-mermaid");
+	if (!readingBlock) {
+		return "";
+	}
+
+	const codeEl = readingBlock.querySelector("pre > code, code.language-mermaid, code");
+	return codeEl?.textContent?.trim() ?? "";
+}
+
+/**
+ * Captures source from surrounding DOM before relying on file fallbacks.
+ */
+function captureMermaidSource(mermaidEl: Element): string {
+	const ownSource = (mermaidEl as HTMLElement).dataset.mermaidSource?.trim();
+	if (ownSource) {
+		return ownSource;
+	}
+
+	const embedContainer = mermaidEl.closest<HTMLElement>(".mermaid-embed");
+	const embedSource = embedContainer?.dataset.mermaidSource?.trim();
+	if (embedSource) {
+		return embedSource;
+	}
+
+	const readingSource = captureSourceFromReadingBlock(mermaidEl);
+	if (readingSource) {
+		return readingSource;
+	}
+
+	const cmBlock = mermaidEl.closest(".cm-preview-code-block.cm-lang-mermaid");
+	if (cmBlock) {
+		const livePreviewSource = captureSourceFromLivePreviewBlock(cmBlock);
+		if (livePreviewSource) {
+			return livePreviewSource;
+		}
+	}
+
+	if (!mermaidEl.querySelector("svg")) {
+		return mermaidEl.textContent?.trim() ?? "";
+	}
+
+	return "";
+}
+
+/**
+ * Reads Mermaid code blocks from the full source file.
+ */
+async function getMermaidSourcesFromFile(app: App, sourcePath: string): Promise<string[]> {
+	const abstractFile = app.vault.getAbstractFileByPath(sourcePath);
+	if (!(abstractFile instanceof TFile)) {
+		return [];
+	}
+
+	const fileContent = await app.vault.read(abstractFile);
+	return extractMermaidBlocks(fileContent.split(/\r?\n/));
+}
+
+/**
+ * Reads Mermaid code blocks from the markdown section currently being rendered.
+ */
+async function getMermaidSourcesFromSection(
 	app: App,
-	svg: SVGSVGElement,
-	filename: string,
-	settings: MermaidViewSettings,
-	panZoomHandler: PanZoomHandler,
-	sourceCode: string,
+	containerEl: HTMLElement,
+	ctx: MarkdownPostProcessorContext
+): Promise<string[]> {
+	const sectionInfo = ctx.getSectionInfo(containerEl);
+	if (!sectionInfo || !ctx.sourcePath) {
+		return [];
+	}
+
+	const abstractFile = app.vault.getAbstractFileByPath(ctx.sourcePath);
+	if (!(abstractFile instanceof TFile)) {
+		return [];
+	}
+
+	const fileContent = await app.vault.read(abstractFile);
+	const lines = fileContent.split(/\r?\n/);
+	const sectionLines = lines.slice(sectionInfo.lineStart, sectionInfo.lineEnd + 1);
+	return extractMermaidBlocks(sectionLines);
+}
+
+/**
+ * Resolves source for copy action with deterministic fallback order.
+ */
+async function resolveSourceCode(
+	app: App,
+	mermaidEl: Element,
+	seedSourceCode: string,
 	sourcePath: string,
 	index: number
-): HTMLElement {
-	const toolbar = document.createElement("div");
-	toolbar.className = "mermaid-toolbar";
+): Promise<string> {
+	const seed = seedSourceCode.trim();
+	if (seed) {
+		return seed;
+	}
 
-	// Zoom control group
-	const zoomGroup = document.createElement("div");
-	zoomGroup.className = "mermaid-toolbar-group";
+	const domSource = captureMermaidSource(mermaidEl);
+	if (domSource) {
+		return domSource;
+	}
 
-	const zoomInBtn = document.createElement("button");
-	zoomInBtn.className = "mermaid-toolbar-button";
-	zoomInBtn.setAttribute("aria-label", "Zoom in");
-	setIcon(zoomInBtn, "plus");
-	zoomInBtn.addEventListener("click", (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		panZoomHandler.zoomIn();
-	});
-	zoomGroup.appendChild(zoomInBtn);
+	const fallbackPath = sourcePath || (app.workspace.getActiveFile()?.path ?? "");
+	if (!fallbackPath) {
+		return "";
+	}
 
-	const resetBtn = document.createElement("button");
-	resetBtn.className = "mermaid-toolbar-button";
-	resetBtn.setAttribute("aria-label", "Reset zoom");
-	setIcon(resetBtn, "rotate-cw");
-	resetBtn.addEventListener("click", (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		panZoomHandler.resetZoom();
-	});
-	zoomGroup.appendChild(resetBtn);
+	const sources = await getMermaidSourcesFromFile(app, fallbackPath);
+	const indexed = sources[index]?.trim();
+	if (indexed) {
+		return indexed;
+	}
 
-	const zoomOutBtn = document.createElement("button");
-	zoomOutBtn.className = "mermaid-toolbar-button";
-	zoomOutBtn.setAttribute("aria-label", "Zoom out");
-	setIcon(zoomOutBtn, "minus");
-	zoomOutBtn.addEventListener("click", (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		panZoomHandler.zoomOut();
-	});
-	zoomGroup.appendChild(zoomOutBtn);
-
-	toolbar.appendChild(zoomGroup);
-
-	// Export control group
-	const exportGroup = document.createElement("div");
-	exportGroup.className = "mermaid-toolbar-group";
-
-	const copyBtn = document.createElement("button");
-	copyBtn.className = "mermaid-toolbar-button";
-	copyBtn.setAttribute("aria-label", "Copy diagram code");
-	setIcon(copyBtn, "copy");
-	let resolvedSourceCode = sourceCode.trim();
-	copyBtn.addEventListener("click", (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		void (async () => {
-			if (!resolvedSourceCode) {
-				const containerSource = svg
-					.closest(".mermaid")
-					?.getAttribute("data-mermaid-source")
-					?.trim();
-				if (containerSource) {
-					resolvedSourceCode = containerSource;
-				}
-			}
-
-			if (!resolvedSourceCode) {
-				const fallbackPath = sourcePath || (app.workspace.getActiveFile()?.path ?? "");
-				if (fallbackPath) {
-					const sources = await getMermaidSourcesFromFile(app, fallbackPath);
-					const matchedSource = sources[index]?.trim();
-					if (matchedSource) {
-						resolvedSourceCode = matchedSource;
-					} else if (sources.length > 0) {
-						resolvedSourceCode = (sources[0] ?? "").trim();
-					}
-				}
-			}
-
-			if (!resolvedSourceCode) {
-				new Notice("Diagram code not available.");
-				return;
-			}
-
-			await navigator.clipboard.writeText(resolvedSourceCode);
-			new Notice("Diagram code copied to clipboard");
-			setIcon(copyBtn, "check");
-			setTimeout(() => setIcon(copyBtn, "copy"), 2000);
-		})().catch(() => {
-			new Notice("Unable to copy diagram code.");
-		});
-	});
-	exportGroup.appendChild(copyBtn);
-
-	const exportBtn = document.createElement("button");
-	exportBtn.className = "mermaid-toolbar-button";
-	exportBtn.setAttribute("aria-label", "Export diagram");
-	setIcon(exportBtn, "download");
-	exportBtn.addEventListener("click", (event) => {
-		event.preventDefault();
-		event.stopPropagation();
-		showExportMenu(event, svg, filename, settings);
-	});
-	exportGroup.appendChild(exportBtn);
-
-	toolbar.appendChild(exportGroup);
-
-	return toolbar;
+	return (sources[0] ?? "").trim();
 }
 
 /**
@@ -197,107 +247,128 @@ function showExportMenu(
 
 /**
  * Checks if an element is inside the standalone MermaidView.
- * We don't want to add toolbar/zoom there since it has its own controls.
  */
 function isInsideMermaidView(el: Element): boolean {
 	return el.closest(".mermaid-view-container") !== null;
 }
 
 /**
- * Adds pan/zoom and export functionality to a mermaid container element.
+ * Creates the embedded toolbar with zoom and export actions.
  */
-function addToolbarToMermaid(
+function createToolbar(
 	app: App,
 	mermaidEl: Element,
-	sourcePath: string,
-	index: number,
+	svg: SVGSVGElement,
+	filename: string,
 	settings: MermaidViewSettings,
-	sourceCode: string
-): void {
-	// Check if we've already processed this element
-	if (mermaidEl.classList.contains("mermaid-toolbar-processed")) {
-		return;
-	}
+	panZoomHandler: PanZoomHandler,
+	sourceCode: string,
+	sourcePath: string,
+	index: number
+): HTMLElement {
+	const toolbar = document.createElement("div");
+	toolbar.className = "mermaid-toolbar";
 
-	// Skip elements inside the standalone MermaidView (it has its own controls)
-	if (isInsideMermaidView(mermaidEl)) {
-		return;
-	}
+	const zoomGroup = document.createElement("div");
+	zoomGroup.className = "mermaid-toolbar-group";
 
-	const svg = mermaidEl.querySelector<SVGSVGElement>("svg");
-	if (!svg) {
-		return;
-	}
-
-	// Mark as processed
-	mermaidEl.classList.add("mermaid-toolbar-processed");
-
-	// Create main wrapper for the diagram
-	const wrapper = document.createElement("div");
-	wrapper.className = "mermaid-diagram-wrapper";
-	if (Platform.isMobile) {
-		wrapper.classList.add("is-mobile");
-	}
-
-	// Create zoom container (provides overflow: hidden)
-	const zoomContainer = document.createElement("div");
-	zoomContainer.className = "mermaid-zoom-container";
-
-	// Create zoom wrapper (receives transforms)
-	const zoomWrapper = document.createElement("div");
-	zoomWrapper.className = "mermaid-embedded-zoom-wrapper";
-
-	// Move the mermaid content into the zoom wrapper
-	const parent = mermaidEl.parentElement;
-	if (!parent) return;
-
-	parent.insertBefore(wrapper, mermaidEl);
-	zoomWrapper.appendChild(mermaidEl);
-	zoomContainer.appendChild(zoomWrapper);
-	wrapper.appendChild(zoomContainer);
-
-	// Create pan/zoom handler (disable wheel zoom to avoid scroll interference)
-	const panZoomHandler = new PanZoomHandler(zoomContainer, zoomWrapper, {
-		enableWheelZoom: false,
-		enableDragPan: true,
-		enableTouchGestures: true,
+	const zoomInBtn = document.createElement("button");
+	zoomInBtn.className = "mermaid-toolbar-button";
+	zoomInBtn.setAttribute("aria-label", "Zoom in");
+	setIcon(zoomInBtn, "plus");
+	zoomInBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		panZoomHandler.zoomIn();
 	});
+	zoomGroup.appendChild(zoomInBtn);
 
-	// Fit content to container after a brief delay to ensure layout is complete
-	requestAnimationFrame(() => {
-		panZoomHandler.fitContent();
+	const resetBtn = document.createElement("button");
+	resetBtn.className = "mermaid-toolbar-button";
+	resetBtn.setAttribute("aria-label", "Reset zoom");
+	setIcon(resetBtn, "rotate-cw");
+	resetBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		panZoomHandler.resetZoom();
 	});
+	zoomGroup.appendChild(resetBtn);
 
-	// Add toolbar with zoom controls and export button
-	const filename = generateFilename(sourcePath, index);
-	const toolbar = createToolbar(
-		app,
-		svg,
-		filename,
-		settings,
-		panZoomHandler,
-		sourceCode,
-		sourcePath,
-		index
-	);
-	wrapper.appendChild(toolbar);
+	const zoomOutBtn = document.createElement("button");
+	zoomOutBtn.className = "mermaid-toolbar-button";
+	zoomOutBtn.setAttribute("aria-label", "Zoom out");
+	setIcon(zoomOutBtn, "minus");
+	zoomOutBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		panZoomHandler.zoomOut();
+	});
+	zoomGroup.appendChild(zoomOutBtn);
+
+	toolbar.appendChild(zoomGroup);
+
+	const exportGroup = document.createElement("div");
+	exportGroup.className = "mermaid-toolbar-group";
+
+	const copyBtn = document.createElement("button");
+	copyBtn.className = "mermaid-toolbar-button";
+	copyBtn.setAttribute("aria-label", "Copy diagram code");
+	setIcon(copyBtn, "copy");
+	let resolvedSourceCode = sourceCode.trim();
+	copyBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		void (async () => {
+			resolvedSourceCode = await resolveSourceCode(
+				app,
+				mermaidEl,
+				resolvedSourceCode,
+				sourcePath,
+				index
+			);
+			if (!resolvedSourceCode) {
+				new Notice("Diagram code not available.");
+				return;
+			}
+
+			await navigator.clipboard.writeText(resolvedSourceCode);
+			new Notice("Diagram code copied to clipboard");
+			setIcon(copyBtn, "check");
+			setTimeout(() => setIcon(copyBtn, "copy"), 2000);
+		})().catch(() => {
+			new Notice("Unable to copy diagram code.");
+		});
+	});
+	exportGroup.appendChild(copyBtn);
+
+	const exportBtn = document.createElement("button");
+	exportBtn.className = "mermaid-toolbar-button";
+	exportBtn.setAttribute("aria-label", "Export diagram");
+	setIcon(exportBtn, "download");
+	exportBtn.addEventListener("click", (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		showExportMenu(event, svg, filename, settings);
+	});
+	exportGroup.appendChild(exportBtn);
+
+	toolbar.appendChild(exportGroup);
+
+	return toolbar;
 }
 
 /**
- * Waits for an SVG element to appear in a mermaid container.
- * Mermaid diagrams render asynchronously, so we need to observe for changes.
+ * Waits for Mermaid async rendering to produce an SVG element.
  */
 function waitForSvg(mermaidEl: Element, timeout = 5000): Promise<SVGSVGElement | null> {
 	return new Promise((resolve) => {
-		// Check if SVG already exists
 		const existingSvg = mermaidEl.querySelector<SVGSVGElement>("svg");
 		if (existingSvg) {
 			resolve(existingSvg);
 			return;
 		}
 
-		// Set up observer to wait for SVG
-		const observer = new MutationObserver((mutations, obs) => {
+		const observer = new MutationObserver((_, obs) => {
 			const svg = mermaidEl.querySelector<SVGSVGElement>("svg");
 			if (svg) {
 				obs.disconnect();
@@ -310,7 +381,6 @@ function waitForSvg(mermaidEl: Element, timeout = 5000): Promise<SVGSVGElement |
 			subtree: true,
 		});
 
-		// Timeout fallback
 		setTimeout(() => {
 			observer.disconnect();
 			resolve(mermaidEl.querySelector<SVGSVGElement>("svg"));
@@ -319,137 +389,83 @@ function waitForSvg(mermaidEl: Element, timeout = 5000): Promise<SVGSVGElement |
 }
 
 /**
- * Captures the mermaid source code from the element before SVG rendering
- * replaces the text content, with fallbacks for when SVG is already rendered.
+ * Adds zoom and export UI around a rendered Mermaid diagram.
  */
-function captureMermaidSource(mermaidEl: Element): string {
-	// Embed mode: source is preserved by EmbedHandler on the container element.
-	const embedContainer = mermaidEl.closest<HTMLElement>(".mermaid-embed");
-	if (embedContainer?.dataset.mermaidSource) {
-		return embedContainer.dataset.mermaidSource.trim();
+function addToolbarToMermaid(
+	app: App,
+	mermaidEl: Element,
+	sourcePath: string,
+	index: number,
+	settings: MermaidViewSettings,
+	sourceCode: string
+): void {
+	if (mermaidEl.classList.contains(MERMAID_TOOLBAR_PROCESSED_CLASS)) {
+		return;
 	}
 
-	// If SVG hasn't rendered yet, text content is the source
-	if (!mermaidEl.querySelector("svg")) {
-		return mermaidEl.textContent?.trim() ?? "";
+	if (isInsideMermaidView(mermaidEl)) {
+		return;
 	}
 
-	// Fallback: look for <code> element in parent block (Reading View)
-	const readingBlock = mermaidEl.closest(".el-pre, .block-language-mermaid");
-	if (readingBlock) {
-		const codeEl = readingBlock.querySelector("pre > code, code.language-mermaid, code");
-		if (codeEl?.textContent?.trim()) {
-			return codeEl.textContent.trim();
-		}
+	const svg = mermaidEl.querySelector<SVGSVGElement>("svg");
+	if (!svg) {
+		return;
 	}
 
-	// Fallback: extract from Live Preview code block structure
-	const cmBlock = mermaidEl.closest(".cm-preview-code-block");
-	if (cmBlock) {
-		const lines: string[] = [];
-		cmBlock.querySelectorAll(".cm-line").forEach((line) => {
-			lines.push(line.textContent ?? "");
-		});
-		if (lines.length > 0) {
-			return lines.join("\n").trim();
-		}
+	mermaidEl.classList.add(MERMAID_TOOLBAR_PROCESSED_CLASS);
+
+	const wrapper = document.createElement("div");
+	wrapper.className = "mermaid-diagram-wrapper";
+	if (Platform.isMobile) {
+		wrapper.classList.add("is-mobile");
 	}
 
-	return "";
-}
+	const zoomContainer = document.createElement("div");
+	zoomContainer.className = "mermaid-zoom-container";
 
-/**
- * Extracts mermaid source from a Live Preview code block container.
- */
-function captureSourceFromLivePreviewBlock(cmBlock: Element): string {
-	const lines: string[] = [];
-	cmBlock.querySelectorAll(".cm-line").forEach((line) => {
-		lines.push(line.textContent ?? "");
+	const zoomWrapper = document.createElement("div");
+	zoomWrapper.className = "mermaid-embedded-zoom-wrapper";
+
+	const parent = mermaidEl.parentElement;
+	if (!parent) {
+		return;
+	}
+
+	// Re-wrap Mermaid output so pan/zoom transforms are isolated from surrounding layout.
+	parent.insertBefore(wrapper, mermaidEl);
+	zoomWrapper.appendChild(mermaidEl);
+	zoomContainer.appendChild(zoomWrapper);
+	wrapper.appendChild(zoomContainer);
+
+	// Disable wheel zoom to avoid hijacking normal note scrolling.
+	const panZoomHandler = new PanZoomHandler(zoomContainer, zoomWrapper, {
+		enableWheelZoom: false,
+		enableDragPan: true,
+		enableTouchGestures: true,
 	});
 
-	if (lines.length === 0) {
-		return "";
-	}
+	// Fit after layout to get stable container dimensions.
+	requestAnimationFrame(() => {
+		panZoomHandler.fitContent();
+	});
 
-	// If fences are present, extract content inside ```mermaid ... ```
-	const fenced = extractMermaidBlocks(lines);
-	if (fenced.length > 0) {
-		return fenced[0] ?? "";
-	}
-
-	// Some Live Preview structures expose only block content lines.
-	return lines.join("\n").trim();
+	const filename = generateFilename(sourcePath, index);
+	const toolbar = createToolbar(
+		app,
+		mermaidEl,
+		svg,
+		filename,
+		settings,
+		panZoomHandler,
+		sourceCode,
+		sourcePath,
+		index
+	);
+	wrapper.appendChild(toolbar);
 }
 
 /**
- * Extracts mermaid code blocks from markdown lines.
- */
-function extractMermaidBlocks(lines: string[]): string[] {
-	const blocks: string[] = [];
-	let inMermaidBlock = false;
-	let currentBlock: string[] = [];
-
-	for (const line of lines) {
-		if (!inMermaidBlock) {
-			const fenceMatch = line.match(/^```([\w-]+)?\s*$/);
-			if (fenceMatch && fenceMatch[1]?.toLowerCase() === "mermaid") {
-				inMermaidBlock = true;
-				currentBlock = [];
-			}
-			continue;
-		}
-
-		if (/^```\s*$/.test(line)) {
-			blocks.push(currentBlock.join("\n").trim());
-			inMermaidBlock = false;
-			currentBlock = [];
-			continue;
-		}
-
-		currentBlock.push(line);
-	}
-
-	return blocks;
-}
-
-/**
- * Extracts mermaid source blocks from a markdown file.
- */
-async function getMermaidSourcesFromFile(app: App, sourcePath: string): Promise<string[]> {
-	const abstractFile = app.vault.getAbstractFileByPath(sourcePath);
-	if (!(abstractFile instanceof TFile)) {
-		return [];
-	}
-
-	const fileContent = await app.vault.read(abstractFile);
-	return extractMermaidBlocks(fileContent.split(/\r?\n/));
-}
-
-/**
- * Extracts mermaid source code from the current rendered section using source lines.
- */
-async function getMermaidSourcesFromSection(
-	app: App,
-	containerEl: HTMLElement,
-	ctx: MarkdownPostProcessorContext
-): Promise<string[]> {
-	const sectionInfo = ctx.getSectionInfo(containerEl);
-	if (!sectionInfo || !ctx.sourcePath) {
-		return [];
-	}
-
-	const abstractFile = app.vault.getAbstractFileByPath(ctx.sourcePath);
-	if (!(abstractFile instanceof TFile)) {
-		return [];
-	}
-	const fileContent = await app.vault.read(abstractFile);
-	const lines = fileContent.split(/\r?\n/);
-	const sectionLines = lines.slice(sectionInfo.lineStart, sectionInfo.lineEnd + 1);
-	return extractMermaidBlocks(sectionLines);
-}
-
-/**
- * Processes a mermaid element to add toolbar functionality.
+ * Coordinates source capture and delayed toolbar setup for one Mermaid node.
  */
 function processMermaidElement(
 	app: App,
@@ -459,16 +475,22 @@ function processMermaidElement(
 	settings: MermaidViewSettings,
 	fallbackSourceCode = ""
 ): void {
-	// Capture source code before SVG rendering replaces text content
+	if (processingMermaidElements.has(mermaidEl)) {
+		return;
+	}
+
 	const sourceCode = captureMermaidSource(mermaidEl) || fallbackSourceCode;
 	if (sourceCode) {
 		(mermaidEl as HTMLElement).dataset.mermaidSource = sourceCode;
 	}
 
+	processingMermaidElements.add(mermaidEl);
 	void waitForSvg(mermaidEl).then((svg) => {
 		if (svg) {
 			addToolbarToMermaid(app, mermaidEl, sourcePath, index, settings, sourceCode);
 		}
+		// Always clear the guard so future rerenders can be processed.
+		processingMermaidElements.delete(mermaidEl);
 	});
 }
 
@@ -524,17 +546,13 @@ export function createLivePreviewExportObserver(
 	let diagramCounter = 0;
 
 	const processElement = (el: Element): void => {
-		// Skip elements inside the standalone MermaidView (it has its own controls)
 		if (isInsideMermaidView(el)) {
 			return;
 		}
 
-		// Look for mermaid containers in Live Preview
-		// Structure: .cm-preview-code-block.cm-embed-block.cm-lang-mermaid > .mermaid > svg
 		if (el.matches?.(".cm-preview-code-block.cm-lang-mermaid")) {
 			const mermaidEl = el.querySelector(".mermaid");
-			if (mermaidEl && !mermaidEl.classList.contains("mermaid-toolbar-processed")) {
-				// Try to get source path from the active file
+			if (mermaidEl && !mermaidEl.classList.contains(MERMAID_TOOLBAR_PROCESSED_CLASS)) {
 				const sourcePath = app.workspace.getActiveFile()?.path ?? "";
 				const livePreviewSource = captureSourceFromLivePreviewBlock(el);
 				processMermaidElement(
@@ -548,19 +566,11 @@ export function createLivePreviewExportObserver(
 			}
 		}
 
-		// Also check for .mermaid elements directly (Reading View structure)
-		if (el.matches?.(".mermaid") && !el.classList.contains("mermaid-toolbar-processed")) {
+		if (el.matches?.(".mermaid") && !el.classList.contains(MERMAID_TOOLBAR_PROCESSED_CLASS)) {
 			const cmBlock = el.closest(".cm-preview-code-block.cm-lang-mermaid");
 			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
 			const livePreviewSource = cmBlock ? captureSourceFromLivePreviewBlock(cmBlock) : "";
-			processMermaidElement(
-				app,
-				el,
-				sourcePath,
-				diagramCounter++,
-				settings,
-				livePreviewSource
-			);
+			processMermaidElement(app, el, sourcePath, diagramCounter++, settings, livePreviewSource);
 		}
 	};
 
@@ -568,46 +578,31 @@ export function createLivePreviewExportObserver(
 		for (const mutation of mutations) {
 			for (const node of Array.from(mutation.addedNodes)) {
 				if (node instanceof HTMLElement) {
-					// Check the node itself
 					processElement(node);
-
-					// Check children for mermaid containers
-					const mermaidContainers = node.querySelectorAll(".cm-preview-code-block.cm-lang-mermaid");
-					mermaidContainers.forEach(processElement);
-
-					// Also check for .mermaid elements directly
-					const mermaidElements = node.querySelectorAll(".mermaid");
-					mermaidElements.forEach(processElement);
+					node
+						.querySelectorAll(".cm-preview-code-block.cm-lang-mermaid")
+						.forEach(processElement);
+					node.querySelectorAll(".mermaid").forEach(processElement);
 				}
 			}
 		}
 	});
 
-	// Observe the entire document
 	observer.observe(document.body, {
 		childList: true,
 		subtree: true,
 	});
 
-	// Process any existing mermaid diagrams (excluding those in standalone MermaidView)
 	document.querySelectorAll(".cm-preview-code-block.cm-lang-mermaid").forEach(processElement);
 	document.querySelectorAll(".mermaid:not(.mermaid-toolbar-processed)").forEach((el) => {
 		if (!isInsideMermaidView(el)) {
 			const cmBlock = el.closest(".cm-preview-code-block.cm-lang-mermaid");
 			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
 			const livePreviewSource = cmBlock ? captureSourceFromLivePreviewBlock(cmBlock) : "";
-			processMermaidElement(
-				app,
-				el,
-				sourcePath,
-				diagramCounter++,
-				settings,
-				livePreviewSource
-			);
+			processMermaidElement(app, el, sourcePath, diagramCounter++, settings, livePreviewSource);
 		}
 	});
 
-	// Return cleanup function
 	return () => {
 		observer.disconnect();
 	};
