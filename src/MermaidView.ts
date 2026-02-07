@@ -318,12 +318,34 @@ export class MermaidView extends TextFileView {
 		// Export control group
 		const exportGroup = controls.createDiv({ cls: "mermaid-zoom-control-group" });
 
+		const copyBtn = exportGroup.createDiv({
+			cls: "mermaid-zoom-control-item",
+			attr: { "aria-label": "Copy diagram code" },
+		});
+		setIcon(copyBtn, "copy");
+		copyBtn.addEventListener("click", () => this.copyDiagramCode(copyBtn));
+
 		const exportBtn = exportGroup.createDiv({
 			cls: "mermaid-zoom-control-item",
 			attr: { "aria-label": "Export diagram" },
 		});
 		setIcon(exportBtn, "download");
 		exportBtn.addEventListener("click", (event) => this.showExportMenu(event));
+	}
+
+	// ========== Copy Methods ==========
+
+	private copyDiagramCode(btn: HTMLElement): void {
+		const source = (this.data ?? "").trim();
+		if (!source) {
+			new Notice("No diagram code to copy.");
+			return;
+		}
+		void navigator.clipboard.writeText(source).then(() => {
+			new Notice("Diagram code copied to clipboard");
+			setIcon(btn, "check");
+			setTimeout(() => setIcon(btn, "copy"), 2000);
+		});
 	}
 
 	// ========== Export Methods ==========
