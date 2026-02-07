@@ -27,22 +27,22 @@ function resolveBackgroundColor(setting: PngBackground): string {
 /**
  * Generates a filename for the export based on the source file path or a default.
  */
-function generateFilename(sourcePath: string, index: number): string {
-	if (!sourcePath) {
-		return index > 0 ? `diagram-${index + 1}` : "diagram";
+export function generateFilename(sourcePath: string, index: number): string {
+	let base = "diagram";
+	if (sourcePath) {
+		const parts = sourcePath.split("/");
+		const filename = parts[parts.length - 1];
+		if (filename) {
+			base = filename.replace(/\.[^.]+$/, "");
+		}
 	}
-
-	const parts = sourcePath.split("/");
-	const filename = parts[parts.length - 1] || "diagram";
-	const basename = filename.replace(/\.[^.]+$/, "");
-
-	return index > 0 ? `${basename}-${index + 1}` : basename;
+	return index > 0 ? `${base}-${index + 1}` : base;
 }
 
 /**
  * Extracts mermaid code blocks from markdown lines.
  */
-function extractMermaidBlocks(lines: string[]): string[] {
+export function extractMermaidBlocks(lines: string[]): string[] {
 	const blocks: string[] = [];
 	let inMermaidBlock = false;
 	let currentBlock: string[] = [];
