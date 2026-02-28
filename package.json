@@ -25,7 +25,7 @@
 	},
 	"devDependencies": {
 		"@codemirror/commands": "^6.10.2",
-		"@codemirror/language": "^6.10.8",
+		"@codemirror/language": "^6.12.2",
 		"@codemirror/state": "^6.5.0",
 		"@codemirror/view": "^6.36.5",
 		"@eslint/js": "^9.30.1",
