@@ -9,6 +9,11 @@ updates:
     labels:
       - task
       - dependencies
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
@@ -17,3 +22,8 @@ updates:
     labels:
       - task
       - dependencies
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
