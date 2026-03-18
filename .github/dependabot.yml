@@ -10,9 +10,8 @@ updates:
       - task
       - dependencies
     groups:
-      actions-minor-patch:
+      actions-patch:
         update-types:
-          - minor
           - patch
 
   - package-ecosystem: github-actions
