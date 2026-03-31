@@ -10,7 +10,7 @@ updates:
       - task
       - dependencies
     groups:
-      actions-patch:
+      npm-patch:
         update-types:
           - patch
 
