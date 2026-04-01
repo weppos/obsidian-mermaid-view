@@ -61,8 +61,8 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 					.addOption("editor-left", "Editor left, preview right")
 					.addOption("editor-right", "Editor right, preview left")
 					.setValue(this.plugin.settings.splitLayout)
-					.onChange(async (value: SplitLayout) => {
-						this.plugin.settings.splitLayout = value;
+					.onChange(async (value) => {
+						this.plugin.settings.splitLayout = value as SplitLayout;
 						await this.plugin.saveSettings();
 					})
 			);
@@ -79,8 +79,8 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 					.addOption("dark", "Dark")
 					.addOption("theme", "Match current theme")
 					.setValue(this.plugin.settings.pngBackground)
-					.onChange(async (value: PngBackground) => {
-						this.plugin.settings.pngBackground = value;
+					.onChange(async (value) => {
+						this.plugin.settings.pngBackground = value as PngBackground;
 						await this.plugin.saveSettings();
 					})
 			);
