@@ -9,8 +9,8 @@ import { EmbedHandler } from "./embed";
 import { registerMermaidExportPostProcessor, createLivePreviewExportObserver } from "./markdownExport";
 
 export default class MermaidViewPlugin extends Plugin {
-	settings: MermaidViewSettings;
-	private embedHandler: EmbedHandler;
+	settings!: MermaidViewSettings;
+	private embedHandler!: EmbedHandler;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();

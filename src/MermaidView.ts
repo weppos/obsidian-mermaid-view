@@ -20,14 +20,14 @@ type ViewMode = "preview" | "split" | "source";
 export class MermaidView extends TextFileView {
 	plugin: MermaidViewPlugin;
 	private mode: ViewMode = "preview";
-	private previewEl: HTMLElement;
-	private sourceEl: HTMLElement;
-	private editorView: EditorView;
+	private previewEl!: HTMLElement;
+	private sourceEl!: HTMLElement;
+	private editorView!: EditorView;
 
 	// Pan/zoom handler
-	private zoomWrapper: HTMLElement;
-	private panZoomHandler: PanZoomHandler;
-	private zoomIndicator: HTMLElement;
+	private zoomWrapper!: HTMLElement;
+	private panZoomHandler!: PanZoomHandler;
+	private zoomIndicator!: HTMLElement;
 
 	// Debounce timer for live preview
 	private renderDebounceTimer: number | null = null;
