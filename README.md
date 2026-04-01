@@ -69,7 +69,7 @@ graph TD
     D --> E
 ```
 
-More information on [Mermaid View features and usage](https://simonecarletti.com/code/obsidian-mermaid-view/).
+More information on [Mermaid View features and usage](https://simonecarletti.com/projects/obsidian-mermaid-view/).
 
 ## Usage
 
