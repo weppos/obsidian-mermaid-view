@@ -106,13 +106,17 @@ export class EmbedHandler {
 		if (!linkedFile) return;
 
 		const content = await this.app.vault.read(linkedFile);
+		const trimmedContent = content.trim();
 
 		// Mark as processed and update classes
 		container.empty();
 		container.addClass("mermaid-embed");
 		container.removeClass("file-embed", "mod-generic");
+		// Preserve original diagram code so toolbar copy can still access it after SVG render.
+		container.dataset.mermaidSource = trimmedContent;
+		container.dataset.mermaidSourcePath = linkedFile.path;
 
-		const mermaidMarkdown = "```mermaid\n" + content.trim() + "\n```";
+		const mermaidMarkdown = "```mermaid\n" + trimmedContent + "\n```";
 
 		const embedComponent = new Component();
 		addChild(embedComponent);
