@@ -35,9 +35,9 @@
 		"eslint-plugin-obsidianmd": "^0.1.9",
 		"globals": "^17.4.0",
 		"jiti": "^2.6.1",
-		"typescript": "^6.0.2",
+		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.58.0",
-		"vitest": "^4.1.2"
+		"vitest": "^4.1.5"
 	},
 	"overrides": {
 		"eslint-plugin-obsidianmd": {
