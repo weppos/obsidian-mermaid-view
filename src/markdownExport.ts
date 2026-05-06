@@ -7,7 +7,7 @@ import type { MermaidViewSettings, PngBackground } from "./settings";
  * Resolves the background color setting to an actual color value.
  */
 function resolveBackgroundColor(setting: PngBackground): string {
-	const style = getComputedStyle(document.body);
+	const style = getComputedStyle(activeDocument.body);
 
 	switch (setting) {
 		case "theme":
@@ -47,14 +47,14 @@ function createToolbar(
 	settings: MermaidViewSettings,
 	panZoomHandler: PanZoomHandler
 ): HTMLElement {
-	const toolbar = document.createElement("div");
+	const toolbar = activeDocument.createDiv();
 	toolbar.className = "mermaid-toolbar";
 
 	// Zoom control group
-	const zoomGroup = document.createElement("div");
+	const zoomGroup = activeDocument.createDiv();
 	zoomGroup.className = "mermaid-toolbar-group";
 
-	const zoomInBtn = document.createElement("button");
+	const zoomInBtn = activeDocument.createEl("button");
 	zoomInBtn.className = "mermaid-toolbar-button";
 	zoomInBtn.setAttribute("aria-label", "Zoom in");
 	setIcon(zoomInBtn, "plus");
@@ -65,7 +65,7 @@ function createToolbar(
 	});
 	zoomGroup.appendChild(zoomInBtn);
 
-	const resetBtn = document.createElement("button");
+	const resetBtn = activeDocument.createEl("button");
 	resetBtn.className = "mermaid-toolbar-button";
 	resetBtn.setAttribute("aria-label", "Reset zoom");
 	setIcon(resetBtn, "rotate-cw");
@@ -76,7 +76,7 @@ function createToolbar(
 	});
 	zoomGroup.appendChild(resetBtn);
 
-	const zoomOutBtn = document.createElement("button");
+	const zoomOutBtn = activeDocument.createEl("button");
 	zoomOutBtn.className = "mermaid-toolbar-button";
 	zoomOutBtn.setAttribute("aria-label", "Zoom out");
 	setIcon(zoomOutBtn, "minus");
@@ -90,10 +90,10 @@ function createToolbar(
 	toolbar.appendChild(zoomGroup);
 
 	// Export control group
-	const exportGroup = document.createElement("div");
+	const exportGroup = activeDocument.createDiv();
 	exportGroup.className = "mermaid-toolbar-group";
 
-	const exportBtn = document.createElement("button");
+	const exportBtn = activeDocument.createEl("button");
 	exportBtn.className = "mermaid-toolbar-button";
 	exportBtn.setAttribute("aria-label", "Export diagram");
 	setIcon(exportBtn, "download");
@@ -180,18 +180,18 @@ function addToolbarToMermaid(
 	mermaidEl.classList.add("mermaid-toolbar-processed");
 
 	// Create main wrapper for the diagram
-	const wrapper = document.createElement("div");
+	const wrapper = activeDocument.createDiv();
 	wrapper.className = "mermaid-diagram-wrapper";
 	if (Platform.isMobile) {
 		wrapper.classList.add("is-mobile");
 	}
 
 	// Create zoom container (provides overflow: hidden)
-	const zoomContainer = document.createElement("div");
+	const zoomContainer = activeDocument.createDiv();
 	zoomContainer.className = "mermaid-zoom-container";
 
 	// Create zoom wrapper (receives transforms)
-	const zoomWrapper = document.createElement("div");
+	const zoomWrapper = activeDocument.createDiv();
 	zoomWrapper.className = "mermaid-embedded-zoom-wrapper";
 
 	// Move the mermaid content into the zoom wrapper
@@ -249,7 +249,7 @@ function waitForSvg(mermaidEl: Element, timeout = 5000): Promise<SVGSVGElement |
 		});
 
 		// Timeout fallback
-		setTimeout(() => {
+		activeWindow.setTimeout(() => {
 			observer.disconnect();
 			resolve(mermaidEl.querySelector<SVGSVGElement>("svg"));
 		}, timeout);
@@ -327,7 +327,7 @@ export function createLivePreviewExportObserver(
 	const observer = new MutationObserver((mutations) => {
 		for (const mutation of mutations) {
 			for (const node of Array.from(mutation.addedNodes)) {
-				if (node instanceof HTMLElement) {
+				if (node.instanceOf(HTMLElement)) {
 					// Check the node itself
 					processElement(node);
 
@@ -344,14 +344,14 @@ export function createLivePreviewExportObserver(
 	});
 
 	// Observe the entire document
-	observer.observe(document.body, {
+	observer.observe(activeDocument.body, {
 		childList: true,
 		subtree: true,
 	});
 
 	// Process any existing mermaid diagrams (excluding those in standalone MermaidView)
-	document.querySelectorAll(".cm-preview-code-block.cm-lang-mermaid").forEach(processElement);
-	document.querySelectorAll(".mermaid:not(.mermaid-toolbar-processed)").forEach((el) => {
+	activeDocument.querySelectorAll(".cm-preview-code-block.cm-lang-mermaid").forEach(processElement);
+	activeDocument.querySelectorAll(".mermaid:not(.mermaid-toolbar-processed)").forEach((el) => {
 		if (!isInsideMermaidView(el)) {
 			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
 			processMermaidElement(el, sourcePath, diagramCounter++, settings);

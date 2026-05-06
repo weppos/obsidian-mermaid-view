@@ -21,7 +21,7 @@ export class EmbedHandler {
 		this.observer = new MutationObserver((mutations) => {
 			for (const mutation of mutations) {
 				for (const node of Array.from(mutation.addedNodes)) {
-					if (node instanceof HTMLElement) {
+					if (node.instanceOf(HTMLElement)) {
 						this.processElement(node, addChild);
 						// Also check children
 						const embeds = node.querySelectorAll<HTMLElement>(".internal-embed.file-embed");
@@ -32,13 +32,13 @@ export class EmbedHandler {
 		});
 
 		// Observe the entire document for embed elements
-		this.observer.observe(document.body, {
+		this.observer.observe(activeDocument.body, {
 			childList: true,
 			subtree: true,
 		});
 
 		// Process any existing embeds
-		document.querySelectorAll<HTMLElement>(".internal-embed.file-embed").forEach((embed) => {
+		activeDocument.querySelectorAll<HTMLElement>(".internal-embed.file-embed").forEach((embed) => {
 			this.processElement(embed, addChild);
 		});
 

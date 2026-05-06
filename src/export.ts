@@ -56,12 +56,12 @@ export async function downloadBlob(blob: Blob, filename: string): Promise<void> 
 
 	// Desktop fallback
 	const url = URL.createObjectURL(blob);
-	const link = document.createElement("a");
+	const link = activeDocument.createEl("a");
 	link.href = url;
 	link.download = filename;
-	document.body.appendChild(link);
+	activeDocument.body.appendChild(link);
 	link.click();
-	document.body.removeChild(link);
+	activeDocument.body.removeChild(link);
 	URL.revokeObjectURL(url);
 }
 
@@ -141,7 +141,7 @@ export async function exportAsPng(svg: SVGSVGElement, options: ExportOptions): P
 	const img = await loadImage(dataUrl);
 
 	// Create canvas with scaled dimensions
-	const canvas = document.createElement("canvas");
+	const canvas = activeDocument.createEl("canvas");
 	canvas.width = width * scale;
 	canvas.height = height * scale;
 
