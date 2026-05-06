@@ -368,7 +368,7 @@ export class MermaidView extends TextFileView {
 	}
 
 	private resolveBackgroundColor(setting: string): string {
-		const style = getComputedStyle(document.body);
+		const style = getComputedStyle(activeDocument.body);
 
 		switch (setting) {
 			case "theme":
