@@ -42,7 +42,7 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("File extensions")
 			.setDesc(
-				"Comma-separated list of file extensions (without the dot) to treat as Mermaid files. (Requires restarting Obsidian to take effect)"
+				"Comma-separated list of file extensions (without the dot) to treat as Mermaid files (requires restarting Obsidian to take effect)."
 			)
 			.addText((text) =>
 				text
@@ -90,10 +90,10 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 			.setDesc("Scale factor for PNG exports. Higher values produce larger, sharper images.")
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption("1", "1X (standard)")
-					.addOption("2", "2X (retina)")
-					.addOption("3", "3X (high resolution)")
-					.addOption("4", "4X (very high resolution)")
+					.addOption("1", "1x (standard)")
+					.addOption("2", "2x (retina)")
+					.addOption("3", "3x (high resolution)")
+					.addOption("4", "4x (very high resolution)")
 					.setValue(this.plugin.settings.pngScale.toString())
 					.onChange(async (value) => {
 						this.plugin.settings.pngScale = parseInt(value) as PngScale;
