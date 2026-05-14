@@ -29,14 +29,14 @@
 		"@codemirror/state": "^6.5.0",
 		"@codemirror/view": "^6.36.5",
 		"@eslint/js": "^10.0.1",
-		"@types/node": "^25.6.0",
+		"@types/node": "^25.6.2",
 		"eslint": "^10.2.1",
 		"esbuild": "^0.28.0",
 		"eslint-plugin-obsidianmd": "^0.1.9",
 		"globals": "^17.5.0",
 		"jiti": "^2.6.1",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.59.1",
+		"typescript-eslint": "^8.59.2",
 		"vitest": "^4.1.5"
 	},
 	"overrides": {
