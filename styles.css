@@ -50,15 +50,11 @@
 	box-sizing: border-box;
 	cursor: grab;
 	position: relative;
+	touch-action: none;
 }
 
 .mermaid-view-preview.mermaid-view-panning {
 	cursor: grabbing;
-}
-
-/* Prevent default touch behaviors for pan/zoom */
-.mermaid-view-preview {
-	touch-action: none;
 }
 
 /* Zoom wrapper for pan/zoom transforms */
