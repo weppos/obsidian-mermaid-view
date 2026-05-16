@@ -211,7 +211,7 @@ function addToolbarToMermaid(
 	});
 
 	// Fit content to container after a brief delay to ensure layout is complete
-	window.requestAnimationFrame(() => {
+	zoomContainer.win.requestAnimationFrame(() => {
 		panZoomHandler.fitContent();
 	});
 
@@ -249,7 +249,7 @@ function waitForSvg(mermaidEl: Element, timeout = 5000): Promise<SVGSVGElement |
 		});
 
 		// Timeout fallback
-		window.setTimeout(() => {
+		mermaidEl.win.setTimeout(() => {
 			observer.disconnect();
 			resolve(mermaidEl.querySelector<SVGSVGElement>("svg"));
 		}, timeout);

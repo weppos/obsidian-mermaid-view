@@ -26,13 +26,13 @@ export default tseslint.config(
 	),
 	{
 		files: ["**/*.json"],
-		ignores: ["**/*.jsonc", "tsconfig.json", "package-lock.json"],
+		ignores: ["tsconfig.json", "package-lock.json"],
 		language: "json/json",
 		plugins: { json },
 		rules: json.configs.recommended.rules,
 	},
 	{
-		files: ["**/*.jsonc", "tsconfig.json"],
+		files: ["tsconfig.json"],
 		language: "json/jsonc",
 		plugins: { json },
 		rules: json.configs.recommended.rules,

@@ -90,10 +90,10 @@ export class MermaidViewSettingTab extends PluginSettingTab {
 			.setDesc("Scale factor for PNG exports. Higher values produce larger, sharper images.")
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption("1", "1X (standard)")
-					.addOption("2", "2X (retina)")
-					.addOption("3", "3X (high resolution)")
-					.addOption("4", "4X (very high resolution)")
+					.addOption("1", "Standard (1x)")
+					.addOption("2", "Retina (2x)")
+					.addOption("3", "High resolution (3x)")
+					.addOption("4", "Very high resolution (4x)")
 					.setValue(this.plugin.settings.pngScale.toString())
 					.onChange(async (value) => {
 						this.plugin.settings.pngScale = parseInt(value) as PngScale;
