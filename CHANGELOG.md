@@ -4,6 +4,12 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ## Unreleased
 
+## 0.6.1 - 2026-05-16
+
+### Added
+
+- Generate GitHub artifact attestations (SLSA build provenance) for `main.js`, `styles.css`, and the release zip during the release workflow.
+
 ## 0.6.0 - 2026-05-16
 
 ### Changed
