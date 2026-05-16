@@ -4,13 +4,17 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ## Unreleased
 
+## 0.6.0 - 2026-05-16
+
 ### Changed
 
 - Unify toolbar layout across standalone view and embedded diagrams for a consistent experience: zoom and export controls are now grouped separately, matching the Obsidian Canvas toolbar style.
+- Update PNG scale labels in settings (e.g. "Standard (1x)") to follow Obsidian's sentence-case UI guidelines.
 
 ### Fixed
 
 - Fix embedded diagram toolbar overlapping Obsidian's copy code button on mermaid code blocks.
+- Schedule timer and animation callbacks on the window that owns each diagram, fixing embedded diagram behavior in Obsidian pop-out windows and satisfying the Obsidian plugin linter.
 
 ## 0.5.0 - 2026-02-05
 
