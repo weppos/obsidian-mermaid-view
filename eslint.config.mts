@@ -9,22 +9,20 @@ export default tseslint.config(
 			globals: {
 				...globals.browser,
 				activeDocument: "readonly",
-				activeWindow: "readonly",
 			},
 			parserOptions: {
 				projectService: {
 					allowDefaultProject: [
 						'eslint.config.js',
-						'manifest.json'
 					]
 				},
 				tsconfigRootDir: import.meta.dirname,
-				extraFileExtensions: ['.json']
 			},
 		},
 	},
 	...obsidianmd.configs.recommended,
 	globalIgnores([
+		".claude",
 		"node_modules",
 		"dist",
 		"esbuild.config.mjs",
@@ -34,5 +32,6 @@ export default tseslint.config(
 		"main.js",
 		"test/**",
 		"vitest.config.ts",
+		"**/*.json",
 	]),
 );
