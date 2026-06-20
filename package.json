@@ -31,13 +31,13 @@
 		"@eslint/js": "^10.0.1",
 		"@types/node": "^25.6.2",
 		"eslint": "^10.3.0",
-		"esbuild": "^0.28.0",
+		"esbuild": "^0.28.1",
 		"eslint-plugin-obsidianmd": "^0.3.0",
 		"globals": "^17.6.0",
 		"jiti": "^2.7.0",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.2",
-		"vitest": "^4.1.6"
+		"vitest": "^4.1.9"
 	},
 	"overrides": {
 		"eslint-plugin-obsidianmd": {
