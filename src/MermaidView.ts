@@ -11,6 +11,8 @@ import { EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import type MermaidViewPlugin from "./main";
 import { exportAsSvg, exportAsPng } from "./export";
+import { bindMermaidFunctions } from "./mermaidBindings";
+import { waitForSvg } from "./mermaidDom";
 import { PanZoomHandler } from "./panZoom";
 
 export const VIEW_TYPE_MERMAID = "mermaid-view";
@@ -273,7 +275,11 @@ export class MermaidView extends TextFileView {
 				cls: "mermaid-view-error",
 				text: `Error rendering diagram:\n${String(error)}`,
 			});
+			return;
 		}
+
+		const svg = await waitForSvg(wrapper);
+		if (svg) bindMermaidFunctions(svg, content);
 	}
 
 	private updateZoomIndicator(scale: number, translateX: number, translateY: number): void {

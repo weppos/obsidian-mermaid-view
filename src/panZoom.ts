@@ -32,6 +32,11 @@ export class PanZoomHandler {
 	private didPan = false; // Track if actual movement occurred
 	private startX = 0;
 	private startY = 0;
+	private downX = 0;
+	private downY = 0;
+
+	// A click keeps its default action below this distance, so links stay clickable.
+	private static readonly PAN_THRESHOLD_PX = 3;
 
 	private readonly minScale: number;
 	private readonly maxScale: number;
@@ -192,14 +197,15 @@ export class PanZoomHandler {
 				this.didPan = false; // Reset pan tracking
 				this.startX = e.clientX - this.translateX;
 				this.startY = e.clientY - this.translateY;
-				this.container.classList.add("mermaid-view-panning");
+				this.downX = e.clientX;
+				this.downY = e.clientY;
 			};
 			this.container.addEventListener("mousedown", handleMouseDown);
 			this.cleanupFns.push(() => this.container.removeEventListener("mousedown", handleMouseDown));
 
 			const handleMouseMove = (e: MouseEvent): void => {
 				if (!this.isPanning) return;
-				this.didPan = true; // Actual movement occurred
+				if (!this.startPan(e.clientX, e.clientY)) return;
 				this.translateX = e.clientX - this.startX;
 				this.translateY = e.clientY - this.startY;
 				this.applyTransform();
@@ -259,7 +265,8 @@ export class PanZoomHandler {
 					this.didPan = false; // Reset pan tracking
 					this.startX = touch1.clientX - this.translateX;
 					this.startY = touch1.clientY - this.translateY;
-					this.container.classList.add("mermaid-view-panning");
+					this.downX = touch1.clientX;
+					this.downY = touch1.clientY;
 				}
 			};
 			this.container.addEventListener("touchstart", handleTouchStart);
@@ -298,7 +305,7 @@ export class PanZoomHandler {
 					this.applyTransform();
 				} else if (e.touches.length === 1 && touch1 && this.isPanning) {
 					// Single touch pan
-					this.didPan = true;
+					if (!this.startPan(touch1.clientX, touch1.clientY)) return;
 					this.translateX = touch1.clientX - this.startX;
 					this.translateY = touch1.clientY - this.startY;
 					this.applyTransform();
@@ -314,6 +321,22 @@ export class PanZoomHandler {
 			this.container.addEventListener("touchend", handleTouchEnd);
 			this.cleanupFns.push(() => this.container.removeEventListener("touchend", handleTouchEnd));
 		}
+	}
+
+	/**
+	 * Starts the pan when the pointer passes the threshold.
+	 * Returns true when the pan is active.
+	 */
+	private startPan(clientX: number, clientY: number): boolean {
+		if (!this.didPan) {
+			const distance = Math.hypot(clientX - this.downX, clientY - this.downY);
+			if (distance <= PanZoomHandler.PAN_THRESHOLD_PX) return false;
+
+			this.didPan = true;
+			this.container.classList.add("mermaid-view-panning");
+		}
+
+		return true;
 	}
 
 	private applyTransform(): void {
