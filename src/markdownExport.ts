@@ -1,5 +1,7 @@
 import { App, MarkdownPostProcessorContext, Menu, Platform, setIcon } from "obsidian";
 import { exportAsSvg, exportAsPng } from "./export";
+import { bindMermaidFunctions, extractMermaidBlocks } from "./mermaidBindings";
+import { waitForSvg } from "./mermaidDom";
 import { PanZoomHandler } from "./panZoom";
 import type { MermaidViewSettings, PngBackground } from "./settings";
 
@@ -157,25 +159,11 @@ function isInsideMermaidView(el: Element): boolean {
  */
 function addToolbarToMermaid(
 	mermaidEl: Element,
+	svg: SVGSVGElement,
 	sourcePath: string,
 	index: number,
 	settings: MermaidViewSettings
 ): void {
-	// Check if we've already processed this element
-	if (mermaidEl.classList.contains("mermaid-toolbar-processed")) {
-		return;
-	}
-
-	// Skip elements inside the standalone MermaidView (it has its own controls)
-	if (isInsideMermaidView(mermaidEl)) {
-		return;
-	}
-
-	const svg = mermaidEl.querySelector<SVGSVGElement>("svg");
-	if (!svg) {
-		return;
-	}
-
 	// Mark as processed
 	mermaidEl.classList.add("mermaid-toolbar-processed");
 
@@ -222,53 +210,36 @@ function addToolbarToMermaid(
 }
 
 /**
- * Waits for an SVG element to appear in a mermaid container.
- * Mermaid diagrams render asynchronously, so we need to observe for changes.
+ * Reads the diagram sources of a note. A note can hold more than one diagram, so this
+ * returns all of them. A `click` directive applies only to the diagram that holds a node
+ * of the same id.
  */
-function waitForSvg(mermaidEl: Element, timeout = 5000): Promise<SVGSVGElement | null> {
-	return new Promise((resolve) => {
-		// Check if SVG already exists
-		const existingSvg = mermaidEl.querySelector<SVGSVGElement>("svg");
-		if (existingSvg) {
-			resolve(existingSvg);
-			return;
-		}
+async function readDiagramSources(app: App, sourcePath: string): Promise<string> {
+	const file = app.vault.getFileByPath(sourcePath);
+	if (!file) return "";
 
-		// Set up observer to wait for SVG
-		const observer = new MutationObserver((mutations, obs) => {
-			const svg = mermaidEl.querySelector<SVGSVGElement>("svg");
-			if (svg) {
-				obs.disconnect();
-				resolve(svg);
-			}
-		});
-
-		observer.observe(mermaidEl, {
-			childList: true,
-			subtree: true,
-		});
-
-		// Timeout fallback
-		mermaidEl.win.setTimeout(() => {
-			observer.disconnect();
-			resolve(mermaidEl.querySelector<SVGSVGElement>("svg"));
-		}, timeout);
-	});
+	return extractMermaidBlocks(await app.vault.cachedRead(file));
 }
 
 /**
- * Processes a mermaid element to add toolbar functionality.
+ * Processes a mermaid element to add toolbar functionality and the `click` directives.
  */
 function processMermaidElement(
+	app: App,
 	mermaidEl: Element,
 	sourcePath: string,
 	index: number,
 	settings: MermaidViewSettings
 ): void {
-	void waitForSvg(mermaidEl).then((svg) => {
-		if (svg) {
-			addToolbarToMermaid(mermaidEl, sourcePath, index, settings);
-		}
+	void waitForSvg(mermaidEl).then(async (svg) => {
+		if (!svg) return;
+
+		// Skip elements inside the standalone MermaidView (it has its own controls)
+		if (isInsideMermaidView(mermaidEl)) return;
+		if (mermaidEl.classList.contains("mermaid-toolbar-processed")) return;
+
+		addToolbarToMermaid(mermaidEl, svg, sourcePath, index, settings);
+		bindMermaidFunctions(svg, await readDiagramSources(app, sourcePath));
 	});
 }
 
@@ -285,7 +256,7 @@ export function registerMermaidExportPostProcessor(
 		const mermaidElements = el.querySelectorAll(".mermaid");
 
 		mermaidElements.forEach((mermaidEl, index) => {
-			processMermaidElement(mermaidEl, ctx.sourcePath, index, settings);
+			processMermaidElement(app, mermaidEl, ctx.sourcePath, index, settings);
 		});
 	});
 }
@@ -313,14 +284,14 @@ export function createLivePreviewExportObserver(
 			if (mermaidEl && !mermaidEl.classList.contains("mermaid-toolbar-processed")) {
 				// Try to get source path from the active file
 				const sourcePath = app.workspace.getActiveFile()?.path ?? "";
-				processMermaidElement(mermaidEl, sourcePath, diagramCounter++, settings);
+				processMermaidElement(app, mermaidEl, sourcePath, diagramCounter++, settings);
 			}
 		}
 
 		// Also check for .mermaid elements directly (Reading View structure)
 		if (el.matches?.(".mermaid") && !el.classList.contains("mermaid-toolbar-processed")) {
 			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
-			processMermaidElement(el, sourcePath, diagramCounter++, settings);
+			processMermaidElement(app, el, sourcePath, diagramCounter++, settings);
 		}
 	};
 
@@ -354,7 +325,7 @@ export function createLivePreviewExportObserver(
 	activeDocument.querySelectorAll(".mermaid:not(.mermaid-toolbar-processed)").forEach((el) => {
 		if (!isInsideMermaidView(el)) {
 			const sourcePath = app.workspace.getActiveFile()?.path ?? "";
-			processMermaidElement(el, sourcePath, diagramCounter++, settings);
+			processMermaidElement(app, el, sourcePath, diagramCounter++, settings);
 		}
 	});
 

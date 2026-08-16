@@ -4,6 +4,15 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ## Unreleased
 
+### Added
+
+- Show the tooltip of a `click` directive when the pointer stays over the node (#72).
+
+### Fixed
+
+- Open the links of `click` directives in diagram types that Obsidian leaves inert, such as gantt (#58).
+- Keep a click on a link a click: a pointer movement now has to pass a small threshold before it counts as a pan.
+
 ## 0.6.1 - 2026-05-16
 
 ### Added

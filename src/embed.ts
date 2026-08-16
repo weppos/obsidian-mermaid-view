@@ -1,4 +1,6 @@
 import { App, Component, MarkdownRenderer, TFile } from "obsidian";
+import { bindMermaidFunctions } from "./mermaidBindings";
+import { waitForSvg } from "./mermaidDom";
 
 /**
  * Handles rendering of embedded mermaid files in notes.
@@ -105,14 +107,14 @@ export class EmbedHandler {
 
 		if (!linkedFile) return;
 
-		const content = await this.app.vault.read(linkedFile);
+		const content = (await this.app.vault.read(linkedFile)).trim();
 
 		// Mark as processed and update classes
 		container.empty();
 		container.addClass("mermaid-embed");
 		container.removeClass("file-embed", "mod-generic");
 
-		const mermaidMarkdown = "```mermaid\n" + content.trim() + "\n```";
+		const mermaidMarkdown = "```mermaid\n" + content + "\n```";
 
 		const embedComponent = new Component();
 		addChild(embedComponent);
@@ -125,5 +127,8 @@ export class EmbedHandler {
 			linkedFile.path,
 			embedComponent
 		);
+
+		const svg = await waitForSvg(container);
+		if (svg) bindMermaidFunctions(svg, content);
 	}
 }
