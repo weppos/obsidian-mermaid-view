@@ -1,3 +1,5 @@
+import { setTooltip } from "obsidian";
+
 /**
  * A link declared by a `click` directive in the diagram source.
  */
@@ -91,6 +93,12 @@ function bindTooltips(svg: SVGSVGElement): void {
 		if (!tooltip || el.querySelector(":scope > title")) continue;
 
 		el.createSvg("title", { prepend: true }).textContent = tooltip;
+
+		// Mermaid draws the label of a node as HTML in a `foreignObject`, which covers most
+		// of the node. The Obsidian tooltip shows there without the delay of the SVG title.
+		for (const label of Array.from(el.querySelectorAll<HTMLElement>("foreignObject > div"))) {
+			setTooltip(label, tooltip);
+		}
 	}
 }
 

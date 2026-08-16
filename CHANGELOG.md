@@ -6,7 +6,7 @@ This project uses [Semantic Versioning 2.0.0](http://semver.org/), the format is
 
 ### Added
 
-- Show the tooltip of a `click` directive when the pointer stays over the node (#72).
+- Show the tooltip of a `click` directive when the pointer is over the node (#72).
 
 ### Fixed
 
