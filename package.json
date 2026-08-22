@@ -29,7 +29,7 @@
 		"@codemirror/state": "^6.5.0",
 		"@codemirror/view": "^6.36.5",
 		"@eslint/js": "^10.0.1",
-		"@types/node": "^25.9.1",
+		"@types/node": "^26.2.0",
 		"eslint": "^10.3.0",
 		"esbuild": "^0.28.2",
 		"eslint-plugin-obsidianmd": "^0.3.0",
