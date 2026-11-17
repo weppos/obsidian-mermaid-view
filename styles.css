@@ -60,7 +60,6 @@
 /* Zoom wrapper for pan/zoom transforms */
 .mermaid-zoom-wrapper {
 	transform-origin: 0 0;
-	will-change: transform;
 }
 
 /* Zoom controls panel - matches Canvas styling */
@@ -214,7 +213,6 @@
 /* Zoom wrapper for embedded diagrams (receives transforms) */
 .mermaid-embedded-zoom-wrapper {
 	transform-origin: 0 0;
-	will-change: transform;
 }
 
 /* Ensure mermaid SVG isn't constrained when zooming */
